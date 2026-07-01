@@ -4,8 +4,8 @@
 <style>
 :root{color-scheme:light dark}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Apple SD Gothic Neo',sans-serif;background:#fafafa;color:#111}
-@media(prefers-color-scheme:dark){body{background:#0b0b0c;color:#eee}.card{background:#161618 !important;border-color:#26262a !important}.thumb{background:#26262a}}
-header{position:sticky;top:0;background:inherit;border-bottom:1px solid #e5e5e5;padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:10}
+@media(prefers-color-scheme:dark){body{background:#0b0b0c;color:#eee}.card,.stat,.chart{background:#161618 !important;border-color:#26262a !important}.thumb{background:#26262a}.bar-bg{fill:#26262a}}
+header{position:sticky;top:0;background:inherit;border-bottom:1px solid #e5e5e5;padding:14px 20px;z-index:10}
 h1{font-size:18px;margin:0;font-weight:800}.muted{color:#999;font-size:13px}
 .wrap{max-width:900px;margin:0 auto;padding:16px 20px 60px}
 .login{max-width:340px;margin:80px auto;text-align:center}
@@ -16,6 +16,10 @@ button{background:#0095F6;color:#fff;border:0;font-weight:700;cursor:pointer}
 .stat b{display:block;font-size:26px;font-weight:800}.stat span{font-size:12px;color:#999}
 .live{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;margin:4px 0 12px}
 .dot{width:8px;height:8px;border-radius:5px;background:#34C759;animation:p 2s infinite}@keyframes p{50%{opacity:.3}}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:16px}
+.chart{background:#fff;border:1px solid #eee;border-radius:14px;padding:12px 14px}
+.chart .ct{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between}
+.chart .ct em{font-style:normal;color:#999;font-weight:400}
 .tabs{display:flex;border-bottom:1px solid #e5e5e5;margin-bottom:8px}
 .tab{flex:1;text-align:center;padding:10px;cursor:pointer;color:#999;border-bottom:2px solid transparent}
 .tab.on{color:inherit;font-weight:700;border-bottom-color:currentColor}
@@ -34,7 +38,8 @@ button{background:#0095F6;color:#fff;border:0;font-weight:700;cursor:pointer}
   <p class="err" id="err"></p><p class="muted">관리자 계정만 접근할 수 있어요.</p>
 </div></div>
 <script>
-const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='posts',timer;
+const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";
+let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='posts',timer;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
@@ -49,10 +54,25 @@ async function fetchData(){
 }
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function rel(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분';if(s<86400)return Math.floor(s/3600)+'시간';if(s<604800)return Math.floor(s/86400)+'일';return Math.floor(s/604800)+'주'}
+function chart(title,tl,key,color){
+  const vals=tl.map(t=>t[key]),max=Math.max(1,...vals),total=vals.reduce((a,b)=>a+b,0),n=tl.length;
+  const W=100,H=40,bw=W/n,gap=bw*0.2;
+  let bars='';
+  tl.forEach((t,i)=>{
+    const h=(t[key]/max)*H, x=i*bw+gap/2, w=bw-gap;
+    bars+='<rect class="bar-bg" x="'+x.toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="'+H+'" rx="0.6" fill="#eee"/>';
+    if(t[key]>0) bars+='<rect x="'+x.toFixed(2)+'" y="'+(H-h).toFixed(2)+'" width="'+w.toFixed(2)+'" height="'+h.toFixed(2)+'" rx="0.6" fill="'+color+'"><title>'+t.date+': '+t[key]+'</title></rect>';
+  });
+  const first=tl[0].date.slice(5),last=tl[n-1].date.slice(5);
+  return '<div class="chart"><div class="ct"><span>'+title+'</span><em>14일 합계 '+total+'</em></div>'+
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:64px;display:block">'+bars+'</svg>'+
+    '<div class="muted" style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px"><span>'+first+'</span><span>오늘</span></div></div>';
+}
 function render(d){
   const s=d.stats;
   const stats='<div class="stats">'+[['users','유저'],['postsToday','오늘 게시물'],['aiCallsToday','오늘 AI콜'],['dmThreads','DM 대화']].map(([k,l])=>'<div class="stat"><b>'+s[k]+'</b><span>'+l+'</span></div>').join('')+'</div>';
   const live='<div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>';
+  const charts=d.timeline?'<div class="charts">'+chart('📝 게시물',d.timeline,'posts','#0095F6')+chart('💬 DM 발신',d.timeline,'dms','#34C759')+chart('🤖 AI 호출',d.timeline,'ai','#F5A623')+'</div>':'';
   const tabs='<div class="tabs"><div class="tab '+(TAB==='posts'?'on':'')+'" onclick="setTab(\'posts\')">게시물 ('+d.posts.length+')</div><div class="tab '+(TAB==='users'?'on':'')+'" onclick="setTab(\'users\')">유저 ('+d.users.length+')</div></div>';
   let body='';
   if(TAB==='posts'){
@@ -60,9 +80,9 @@ function render(d){
   }else{
     body=d.users.map(u=>'<div class="card user"><div style="flex:1"><div class="n">'+esc(u.nickname||'(닉네임 없음)')+'</div><div class="e">'+esc(u.email||'-')+'</div><div class="s">게시물 '+u.posts+' · DM '+u.dms+' · 오늘 AI '+u.ai_today+' · 팔로워 '+u.followers+'</div></div><div class="t">'+rel(u.last_active)+'</div></div>').join('');
   }
-  document.getElementById('app').innerHTML='<div class="wrap">'+stats+live+tabs+body+'</div>';
+  document.getElementById('app').innerHTML='<div class="wrap"><h1 style="margin:0 0 4px">유저 활동</h1>'+stats+live+charts+tabs+body+'</div>';
 }
-function setTab(t){TAB=t;refresh()}
+function setTab(t){TAB=t;if(LAST)render(LAST)}
 let LAST=null;
 async function refresh(){try{const d=await fetchData();LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
