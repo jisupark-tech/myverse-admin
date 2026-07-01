@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyVerse 관리자 · 유저 활동</title>
+<style>
+:root{color-scheme:light dark}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Apple SD Gothic Neo',sans-serif;background:#fafafa;color:#111}
+@media(prefers-color-scheme:dark){body{background:#0b0b0c;color:#eee}.card{background:#161618 !important;border-color:#26262a !important}.thumb{background:#26262a}}
+header{position:sticky;top:0;background:inherit;border-bottom:1px solid #e5e5e5;padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:10}
+h1{font-size:18px;margin:0;font-weight:800}.muted{color:#999;font-size:13px}
+.wrap{max-width:900px;margin:0 auto;padding:16px 20px 60px}
+.login{max-width:340px;margin:80px auto;text-align:center}
+input,button{font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid #ccc;width:100%;margin:6px 0}
+button{background:#0095F6;color:#fff;border:0;font-weight:700;cursor:pointer}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.stat{flex:1;min-width:110px;background:#fff;border:1px solid #eee;border-radius:14px;padding:14px;text-align:center}
+.stat b{display:block;font-size:26px;font-weight:800}.stat span{font-size:12px;color:#999}
+.live{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;margin:4px 0 12px}
+.dot{width:8px;height:8px;border-radius:5px;background:#34C759;animation:p 2s infinite}@keyframes p{50%{opacity:.3}}
+.tabs{display:flex;border-bottom:1px solid #e5e5e5;margin-bottom:8px}
+.tab{flex:1;text-align:center;padding:10px;cursor:pointer;color:#999;border-bottom:2px solid transparent}
+.tab.on{color:inherit;font-weight:700;border-bottom-color:currentColor}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.phead{display:flex;align-items:center;gap:8px;margin-bottom:6px}.phead b{font-size:14px}.phead .t{margin-left:auto;color:#999;font-size:12px}
+.thumbs{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}.thumb{width:110px;height:110px;object-fit:cover;border-radius:10px;background:#eee}
+.content{font-size:14px;line-height:1.5;white-space:pre-wrap}
+.user{display:flex;align-items:center;gap:12px}.user .n{font-weight:700}.user .e{color:#999;font-size:13px}.user .s{color:#888;font-size:12px}.user .t{margin-left:auto;color:#999;font-size:12px}
+.err{color:#e53e3e;font-size:13px}
+</style></head><body>
+<div id="app"><div class="login" id="login">
+  <h1>MyVerse 관리자</h1><p class="muted">유저 활동 대시보드</p>
+  <input id="email" placeholder="이메일" autocomplete="username">
+  <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+  <button onclick="login()">로그인</button>
+  <p class="err" id="err"></p><p class="muted">관리자 계정만 접근할 수 있어요.</p>
+</div></div>
+<script>
+const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='posts',timer;
+async function login(){
+  const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
+  document.getElementById('err').textContent='';
+  const r=await fetch(URL_+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+  const j=await r.json();
+  if(!j.access_token){document.getElementById('err').textContent='로그인 실패: '+(j.error_description||j.msg||'확인');return}
+  TOKEN=j.access_token;sessionStorage.setItem('mv_at',TOKEN);start();
+}
+async function fetchData(){
+  const r=await fetch(URL_+'/functions/v1/admin-activity',{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},body:'{}'});
+  if(r.status===403){throw 'forbidden'}if(r.status===401){throw 'unauth'}return r.json();
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function rel(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분';if(s<86400)return Math.floor(s/3600)+'시간';if(s<604800)return Math.floor(s/86400)+'일';return Math.floor(s/604800)+'주'}
+function render(d){
+  const s=d.stats;
+  const stats='<div class="stats">'+[['users','유저'],['postsToday','오늘 게시물'],['aiCallsToday','오늘 AI콜'],['dmThreads','DM 대화']].map(([k,l])=>'<div class="stat"><b>'+s[k]+'</b><span>'+l+'</span></div>').join('')+'</div>';
+  const live='<div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>';
+  const tabs='<div class="tabs"><div class="tab '+(TAB==='posts'?'on':'')+'" onclick="setTab(\'posts\')">게시물 ('+d.posts.length+')</div><div class="tab '+(TAB==='users'?'on':'')+'" onclick="setTab(\'users\')">유저 ('+d.users.length+')</div></div>';
+  let body='';
+  if(TAB==='posts'){
+    body=d.posts.length?d.posts.map(p=>'<div class="card"><div class="phead"><b>'+esc(p.author)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'+(p.media_urls.length?'<div class="thumbs">'+p.media_urls.map(u=>'<img class="thumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')+(p.content?'<div class="content">'+esc(p.content)+'</div>':'')+(p.media_type==='poll'?'<div class="muted">📊 투표</div>':'')+'</div>').join(''):'<p class="muted">아직 유저 게시물이 없어요.</p>';
+  }else{
+    body=d.users.map(u=>'<div class="card user"><div style="flex:1"><div class="n">'+esc(u.nickname||'(닉네임 없음)')+'</div><div class="e">'+esc(u.email||'-')+'</div><div class="s">게시물 '+u.posts+' · DM '+u.dms+' · 오늘 AI '+u.ai_today+' · 팔로워 '+u.followers+'</div></div><div class="t">'+rel(u.last_active)+'</div></div>').join('');
+  }
+  document.getElementById('app').innerHTML='<div class="wrap">'+stats+live+tabs+body+'</div>';
+}
+function setTab(t){TAB=t;refresh()}
+let LAST=null;
+async function refresh(){try{const d=await fetchData();LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
+function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
+if(TOKEN)start();
+</script></body></html>
