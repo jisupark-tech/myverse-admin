@@ -17,13 +17,14 @@ button{background:#0095F6;color:#fff;border:0;font-weight:700;cursor:pointer}
 .kpi{background:#fff;border:1px solid #eee;border-radius:12px;padding:10px 12px}
 .kpi b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.kpi span{font-size:11px;color:#999}.kpi .sub{font-size:11px;color:#0095F6}
 .panel{background:#fff;border:1px solid #eee;border-radius:14px;padding:14px 16px;margin-bottom:14px}
-.tabs{display:flex;border-bottom:1px solid #e5e5e5;margin:6px 0 12px;position:sticky;top:49px;background:inherit;z-index:9}
+.tabs{display:flex;border-bottom:1px solid #e5e5e5;margin:0 0 12px;position:sticky;top:0;background:#fafafa;z-index:20}
+@media(prefers-color-scheme:dark){.tabs{background:#0b0b0c !important;border-bottom-color:#26262a}}
 .tab{flex:1;text-align:center;padding:10px;cursor:pointer;color:#999;border-bottom:2px solid transparent;font-size:14px}
 .tab.on{color:inherit;font-weight:700;border-bottom-color:#0095F6}
 table{width:100%;border-collapse:collapse;font-size:13px}
 .scroll{overflow-x:auto}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
-th{background:#f7f7f8;font-size:12px;color:#666;position:sticky;top:0}
+th{background:#f7f7f8;font-size:12px;color:#666}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 .ibar{height:7px;border-radius:4px;background:#0095F6;display:inline-block;vertical-align:middle}
