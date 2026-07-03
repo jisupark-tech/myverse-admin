@@ -50,6 +50,11 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 .pgal{display:flex;gap:8px;overflow-x:auto;padding:8px 0}.pimg{width:110px;height:138px;object-fit:cover;border-radius:10px;flex:0 0 auto;background:#eee}.pimg:first-child{outline:2px solid #0095F6}
 .pbio{font-size:14px;margin:6px 0}.pfacts,.pface{font-size:12px;color:#666;background:#f4f4f5;border-radius:8px;padding:7px 9px;margin-top:6px;line-height:1.45}.pfacts b,.pface b{color:#0095F6;margin-right:4px}
 @media(prefers-color-scheme:dark){.pfacts,.pface{background:#1f1f22;color:#bbb}th{background:#1a1a1d}}
+.dpost{border:1px solid #eee;border-radius:12px;padding:10px;margin-bottom:10px}
+.dthumbs{display:flex;gap:6px;overflow-x:auto;margin-bottom:8px;position:relative}.dthumb{width:120px;height:150px;object-fit:cover;border-radius:8px;flex:0 0 auto;background:#eee}
+.nph{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px}
+.dpc{font-size:14px;line-height:1.5;white-space:pre-wrap}.dpmeta{font-size:12px;color:#999;margin-top:5px}
+@media(prefers-color-scheme:dark){.dpost{border-color:#26262a}.dthumb{background:#26262a}}
 .pfeed{display:flex;gap:8px;overflow-x:auto;margin-top:8px}.pf{flex:0 0 150px;border:1px solid #eee;border-radius:10px;overflow:hidden}.pfimg{width:100%;height:100px;object-fit:cover;display:block;background:#eee}.pfx{padding:6px 8px}.pfc{font-size:12px;line-height:1.4}.ploc{font-size:11px;color:#0095F6;margin-top:3px}
 .err{color:#e53e3e;font-size:13px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;z-index:50;overflow-y:auto}
@@ -82,6 +87,8 @@ function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':
 function rel(iso){if(!iso)return'';const s=(Date.now()-new Date(iso))/1000;if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분';if(s<86400)return Math.floor(s/3600)+'시간';if(s<604800)return Math.floor(s/86400)+'일';return Math.floor(s/604800)+'주'}
 const N=n=>(n||0).toLocaleString('en-US');
 const D=n=>'$'+(n||0).toFixed(4);
+const pimgs=x=>(Array.isArray(x.image_urls)&&x.image_urls.length?x.image_urls:(x.image_url?[x.image_url]:[])).filter(Boolean);
+function dpost(x){const im=pimgs(x);return'<div class="dpost">'+(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="dpc">'+esc(x.content||'(사진)')+'</div><div class="dpmeta">'+(x.location?'📍'+esc(x.location)+' · ':'')+(x.like_count!=null?'❤ '+x.like_count+' · ':'')+rel(x.created_at)+' 전</div></div>'}
 function kpi(b,l,sub){return'<div class="kpi"><b>'+b+'</b><span>'+l+'</span>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>'}
 // SVG 막대 (일자/시간대)
 function bars(data,keys,colors,labelIdx){
@@ -163,7 +170,7 @@ function personasTab(d){return(d.personas||[]).map(p=>{const posts=(p.recent_pos
     +(p.bio?'<div class="pbio">📝 '+esc(p.bio)+'</div>':'')
     +(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
     +(p.face?'<div class="pface"><b>외모앵커</b>'+esc(p.face)+'</div>':'')
-    +(posts.length?'<div class="pfeed">'+posts.map(x=>'<div class="pf">'+(x.image_url?'<img class="pfimg" src="'+x.image_url+'" loading="lazy">':'')+'<div class="pfx"><div class="pfc">'+esc((x.content||'').slice(0,60))+'</div>'+(x.location?'<div class="ploc">📍 '+esc(x.location)+'</div>':'')+'</div></div>').join('')+'</div>':'')
+    +(posts.length?'<div class="pfeed">'+posts.map(x=>{const im=pimgs(x);return'<div class="pf">'+(im.length?'<div style="position:relative"><img class="pfimg" src="'+im[0]+'" loading="lazy">'+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="pfx"><div class="pfc">'+esc((x.content||'').slice(0,60))+'</div>'+(x.location?'<div class="ploc">📍 '+esc(x.location)+'</div>':'')+'</div></div>'}).join('')+'</div>':'')
     +'</div>';}).join('')}
 
 async function drill(kind,id){
@@ -190,7 +197,7 @@ function personaModal(d){const p=d.persona||{},av=p.avatar||{};
   if(av.face)h+='<div class="pface"><b>외모앵커</b>'+esc(av.face)+'</div>';
   h+='<h2>관계 상위 유저</h2>'+tbl('<th>유저</th><th class="n">호감도</th><th>상태</th><th class="n">대화수</th><th>팔로우</th>',
     (d.rels||[]).slice(0,15).map(r=>'<tr><td class="muted">'+esc((r.user_id||'').slice(0,8))+'…</td><td class="n">'+r.score+'</td><td>'+esc(r.status||'-')+'</td><td class="n">'+(r.interaction_count||0)+'</td><td>'+(r.follows_user?'✓':'')+'</td></tr>').join('')||'<tr><td colspan=5 class="muted">없음</td></tr>');
-  h+='<h2>최근 게시물</h2>'+(d.recentPosts||[]).slice(0,8).map(x=>'<div class="ev">'+(x.image_url?'<img class="thumb" src="'+x.image_url+'" style="width:34px;height:34px">':'')+'<span class="tx">'+esc((x.content||'').slice(0,60))+'</span>'+(x.location?'<span class="ploc">📍'+esc(x.location)+'</span>':'')+'<span class="tm">'+rel(x.created_at)+'</span></div>').join('');
+  h+='<h2>게시물 상세 ('+(d.recentPosts||[]).length+')</h2>'+((d.recentPosts||[]).map(dpost).join('')||'<p class="muted">없음</p>');
   return h;
 }
 function setTab(t){TAB=t;if(LAST)render(LAST)}
