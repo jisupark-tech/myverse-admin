@@ -57,6 +57,9 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 @media(prefers-color-scheme:dark){.dpost{border-color:#26262a}.dthumb{background:#26262a}}
 .pfeed{display:flex;gap:8px;overflow-x:auto;margin-top:8px}.pf{flex:0 0 150px;border:1px solid #eee;border-radius:10px;overflow:hidden}.pfimg{width:100%;height:100px;object-fit:cover;display:block;background:#eee}.pfx{padding:6px 8px}.pfc{font-size:12px;line-height:1.4}.ploc{font-size:11px;color:#0095F6;margin-top:3px}
 .err{color:#e53e3e;font-size:13px}
+.row{display:flex;gap:8px;margin-top:10px}
+.okbtn,.nobtn{width:auto;flex:1;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;font-size:14px}
+.okbtn{background:#0a7d33;color:#fff}.nobtn{background:#e53e3e;color:#fff}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;z-index:50;overflow-y:auto}
 .modal-box{background:#fff;border:1px solid #eee;border-radius:16px;max-width:760px;width:100%;padding:18px 20px;margin:auto}
 .mx{float:right;font-size:22px;cursor:pointer;color:#999;background:none;border:0;width:auto;padding:0;margin:0}
@@ -70,7 +73,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 </div></div>
 <script>
 const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";
-let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false;
+let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
@@ -237,11 +240,48 @@ function auditTab(){
     :'<p class="muted">아직 정리 내역이 없어요.</p>')+'</div>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(LAST)render(LAST)}
+// ── 승인 대기(전수 검수) 탭 ──
+async function loadPending(){
+  if(PEND_BUSY)return;PEND_BUSY=true;if(LAST)render(LAST);
+  try{PEND=await api({view:'pending'})}catch(e){PEND={error:String(e)}}
+  PEND_BUSY=false;if(LAST)render(LAST);
+}
+async function approve(kind,id,ok){
+  const action=(kind==='post'?(ok?'approve_post':'reject_post'):(ok?'approve_persona':'reject_persona'));
+  try{await api({action,id})}catch(e){alert('실패: '+e)}
+  await loadPending();
+}
+async function approveAll(){
+  if(!PEND||!(PEND.posts||[]).length)return;
+  if(!confirm('대기 게시물 '+PEND.posts.length+'개를 모두 승인할까요?'))return;
+  try{await api({action:'approve_post',ids:PEND.posts.map(p=>p.id)})}catch(e){alert('실패: '+e)}
+  await loadPending();
+}
+function pendingTab(){
+  if(!PEND&&!PEND_BUSY)loadPending();
+  if(!PEND)return'<p class="muted">승인 대기 불러오는 중…</p>';
+  if(PEND.error)return'<p class="err">불러오기 실패: '+esc(PEND.error)+'</p>';
+  let h='<div class="panel"><h2>🛡 승인 게이트 — 전수 검수</h2><p class="muted">새 페르소나·게시물은 여기서 승인해야 앱에 노출돼요(통매음·음란물 방지). 이미지·내용을 직접 확인하고 승인/거부하세요.</p>'
+    +'<div class="kpis"><div class="kpi"><b>'+N(PEND.pendingPersonas)+'</b><span>대기 페르소나</span></div><div class="kpi"><b>'+N(PEND.pendingPosts)+'</b><span>대기 게시물</span></div></div></div>';
+  // 대기 페르소나
+  if((PEND.personas||[]).length){
+    h+='<div class="panel"><h2>👤 새 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
+      +gal(av.image,av.photos)+(p.bio?'<div class="pbio">📝 '+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
+      +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">✅ 승인</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join('')+'</div>';
+  }
+  // 대기 게시물
+  h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">🖼 새 게시물 ('+(PEND.posts||[]).length+')</h2>'+((PEND.posts||[]).length?'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAll()">모두 승인</button>':'')+'</div>'
+    +((PEND.posts||[]).length?PEND.posts.map(p=>{const im=pimgs(p).map(simg).filter(Boolean);return'<div class="dpost"><div class="phead"><b>'+esc(p.personas?p.personas.name:p.persona_id)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'
+      +(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')
+      +'<div class="dpc">'+esc(p.content||'(사진)')+'</div>'+(p.location?'<div class="dpmeta">📍'+esc(p.location)+'</div>':'')
+      +'<div class="row"><button class="okbtn" onclick="approve(\'post\',\''+p.id+'\',true)">✅ 승인</button><button class="nobtn" onclick="approve(\'post\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join(''):'<p class="muted">대기 중인 게시물이 없어요.</p>')+'</div>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='승인'&&!PEND)loadPending();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','게시물','유저','페르소나','검수'];
-  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null};
-  let body=TAB==='분석'?analytics(d):TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():personasTab(d);
+  const tabs=['분석','승인','게시물','유저','페르소나','검수'];
+  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'승인':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null};
+  let body=TAB==='분석'?analytics(d):TAB==='승인'?pendingTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
