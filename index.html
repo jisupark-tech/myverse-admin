@@ -70,7 +70,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 </div></div>
 <script>
 const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";
-let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false;
+let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
@@ -200,11 +200,45 @@ function personaModal(d){const p=d.persona||{},av=p.avatar||{};
   h+='<h2>게시물 상세 ('+(d.recentPosts||[]).length+')</h2>'+((d.recentPosts||[]).map(dpost).join('')||'<p class="muted">없음</p>');
   return h;
 }
-function setTab(t){TAB=t;if(LAST)render(LAST)}
+// ── 검수(이미지 감사) 탭 ──
+async function loadAudit(run){
+  if(AUDIT_BUSY)return;AUDIT_BUSY=true;if(LAST)render(LAST);
+  try{AUDIT=await api(run?{view:'audit',run:true}:{view:'audit'})}catch(e){AUDIT={error:String(e)}}
+  AUDIT_BUSY=false;if(LAST)render(LAST);
+}
+function auditTab(){
+  if(!AUDIT&&!AUDIT_BUSY)loadAudit();
+  if(!AUDIT)return'<p class="muted">검수 현황 불러오는 중…</p>';
+  if(AUDIT.error)return'<p class="err">불러오기 실패: '+esc(AUDIT.error)+'</p>';
+  const s=AUDIT.stats||{},rr=AUDIT.runResult;
+  let h='<div class="kpis">'
+    +kpi(N(s.total),'페르소나 게시물')
+    +kpi(N(s.audited),'검수 완료')
+    +kpi(N(s.pending),'검수 대기')
+    +kpi(N(s.removedTotal),'삭제된 게시물(누적)')
+    +kpi(N(s.imgTotal),'제거된 사진(누적)')
+    +'</div>';
+  h+='<div class="panel"><h2>🧹 이미지 검수</h2>'
+    +'<p class="muted">AI 비전이 외국인 얼굴·기괴/왜곡·해외배경·캡션과 무관한 사진을 판정해 정리해요. 2시간마다 자동 실행되고, 아래 버튼으로 즉시 한 배치(12개)를 돌릴 수 있어요.</p>'
+    +'<button style="width:auto;padding:10px 18px" onclick="loadAudit(true)"'+(AUDIT_BUSY||s.pending===0?' disabled':'')+'>'+(AUDIT_BUSY?'검수 중…':(s.pending===0?'검수할 게시물 없음':'지금 검수 실행 (12개)'))+'</button>'
+    +(rr?'<p class="muted" style="margin-top:8px">방금 실행: 판정 '+N(rr.audited||0)+' · 게시물 삭제 '+N(rr.removedPosts||0)+' · 사진 제거 '+N(rr.cleanedImgs||0)+' · 통과 '+N(rr.kept||0)+(rr.remaining!=null?' · 남은 대기 '+N(rr.remaining):'')+'</p>':'')
+    +'</div>';
+  const log=AUDIT.log||[];
+  h+='<div class="panel"><h2>🗑 정리 내역 (최근 '+log.length+'건)</h2>'
+    +(log.length?log.map(x=>'<div class="ev" style="align-items:flex-start">'
+      +(x.image_url?'<img class="thumb" src="'+x.image_url+'" loading="lazy" style="width:56px;height:56px;flex:0 0 auto">':'')
+      +'<span class="badge" style="background:'+(x.action==='removed_post'?'#e53e3e':'#F5A623')+'">'+(x.action==='removed_post'?'게시물삭제':'사진제거')+'</span>'
+      +'<span class="who">'+esc(x.persona_name||x.persona_id||'?')+'</span>'
+      +'<span class="tx" style="white-space:normal">'+esc((x.content||'(캡션 없음)').slice(0,80))+'</span>'
+      +'<span class="tm">'+rel(x.created_at)+'</span></div>').join('')
+    :'<p class="muted">아직 정리 내역이 없어요.</p>')+'</div>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','게시물','유저','페르소나'];
-  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length};
-  let body=TAB==='분석'?analytics(d):TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):personasTab(d);
+  const tabs=['분석','게시물','유저','페르소나','검수'];
+  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null};
+  let body=TAB==='분석'?analytics(d):TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
