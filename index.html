@@ -73,7 +73,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
 </div></div>
 <script>
 const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";
-let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false;
+let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
@@ -277,11 +277,43 @@ function pendingTab(){
       +'<div class="row"><button class="okbtn" onclick="approve(\'post\',\''+p.id+'\',true)">✅ 승인</button><button class="nobtn" onclick="approve(\'post\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join(''):'<p class="muted">대기 중인 게시물이 없어요.</p>')+'</div>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='승인'&&!PEND)loadPending();if(LAST)render(LAST)}
+// ── 학습(AI 데이터/이력) 탭 ──
+async function loadTraining(){
+  if(TRAIN_BUSY)return;TRAIN_BUSY=true;if(LAST)render(LAST);
+  try{TRAIN=await api({view:'training'})}catch(e){TRAIN={error:String(e)}}
+  TRAIN_BUSY=false;if(LAST)render(LAST);
+}
+function trainingTab(){
+  if(!TRAIN&&!TRAIN_BUSY)loadTraining();
+  if(!TRAIN)return'<p class="muted">학습 현황 불러오는 중…</p>';
+  if(TRAIN.error)return'<p class="muted">오류: '+esc(TRAIN.error)+'</p>';
+  const c=TRAIN.consent||{},p=TRAIN.pairs||{};
+  let h='<div class="panel"><h2>📥 무엇을 수집 중인가</h2>'
+    +'<div class="kpis">'+kpi(N(c.yes)+' / '+N(c.total),'학습 동의 유저')
+    +kpi(N(p.total),'수집된 (게시물→댓글) 쌍')
+    +kpi((p.bySource||[]).map(s=>esc(s.source)+' '+N(s.n)).join(' · ')||'—','소스별')+'</div>';
+  if((p.daily||[]).length){const mx=Math.max(...p.daily.map(x=>+x.n),1);
+    h+='<div class="muted" style="margin:8px 0 4px">최근 14일 수집량</div><div style="display:flex;gap:3px;align-items:flex-end;height:56px">'
+     +p.daily.map(x=>'<div title="'+esc(x.d)+': '+x.n+'" style="flex:1;background:#0095F6;border-radius:2px 2px 0 0;height:'+Math.round(+x.n/mx*100)+'%;min-height:2px"></div>').join('')+'</div>';}
+  h+='<p class="muted" style="margin-top:10px">동의한 유저가 페르소나 게시물에 단 댓글만 비식별로 적재됩니다. 이 데이터로 대화 AI를 파인튜닝해 AI 티를 줄입니다.</p></div>';
+  // 최근 수집 샘플
+  h+='<div class="panel"><h2>🧾 최근 수집 샘플 (게시물 맥락 → 실제 유저 댓글)</h2>';
+  h+=(TRAIN.samples||[]).length?TRAIN.samples.map(s=>'<div class="card"><div class="muted" style="font-size:12px">📄 '+esc(s.context||'(맥락 없음)')+'</div><div style="margin-top:4px">💬 <b>'+esc(s.response)+'</b></div><div class="t">'+rel(s.at)+' 전</div></div>').join(''):'<p class="muted">아직 수집된 댓글이 없어요. 유저가 [설정 > 데이터 활용]에서 동의하면 쌓이기 시작합니다.</p>';
+  h+='</div>';
+  // 학습 이력
+  h+='<div class="panel"><h2>🧪 어떻게 학습됐나 (파인튜닝 이력)</h2>';
+  h+=(TRAIN.runs||[]).length?tbl('<th>일시</th><th>방식</th><th>베이스 모델</th><th class="n">예제수</th><th>loss</th><th>상태</th><th>결과</th>',
+    TRAIN.runs.map(r=>{const st=r.status==='completed'?'✅완료':r.status==='blocked'?'⛔차단':r.status==='failed'?'❌실패':esc(r.status||'');
+      const loss=(r.val_loss_start!=null&&r.val_loss_end!=null)?(r.val_loss_start+'→'+r.val_loss_end):'—';
+      return'<tr><td>'+rel(r.created_at)+' 전</td><td>'+esc(r.method||'')+'</td><td>'+esc(r.base_model||'')+'<div class="muted" style="font-size:11px">'+esc(r.dataset||'')+'</div></td><td class="n">'+N(r.examples)+'</td><td>'+loss+'</td><td>'+st+'</td><td style="max-width:280px">'+esc(r.result||'')+(r.notes?'<div class="muted" style="font-size:11px">'+esc(r.notes)+'</div>':'')+'</td></tr>';}).join('')):'<tr><td colspan="7" class="muted">학습 이력 없음</td></tr>';
+  h+='</div>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='승인'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','승인','게시물','유저','페르소나','검수'];
-  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'승인':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null};
-  let body=TAB==='분석'?analytics(d):TAB==='승인'?pendingTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():personasTab(d);
+  const tabs=['분석','승인','게시물','유저','페르소나','검수','학습'];
+  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'승인':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null};
+  let body=TAB==='분석'?analytics(d):TAB==='승인'?pendingTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
