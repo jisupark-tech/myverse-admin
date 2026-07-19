@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https://kjztmyosougifuneyhqw.supabase.co data:; connect-src https://kjztmyosougifuneyhqw.supabase.co; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>MyVerse 관리자 · 분석</title>
 <style>
 :root{color-scheme:light dark}
@@ -86,7 +87,7 @@ async function api(body){
   const r=await fetch(URL_+'/functions/v1/admin-activity',{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
   if(r.status===403)throw'forbidden';if(r.status===401)throw'unauth';return r.json();
 }
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 // 이미지 src 전용: 우리 스토리지 URL만 허용 + 이스케이프 (유저가 쓸 수 있는 media_urls 경유 XSS 차단)
 function simg(u){u=String(u||'');return u.indexOf('https://kjztmyosougifuneyhqw.supabase.co/storage/')===0?esc(u):''}
 function rel(iso){if(!iso)return'';const s=(Date.now()-new Date(iso))/1000;if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분';if(s<86400)return Math.floor(s/3600)+'시간';if(s<604800)return Math.floor(s/86400)+'일';return Math.floor(s/604800)+'주'}
