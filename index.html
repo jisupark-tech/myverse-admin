@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https://kjztmyosougifuneyhqw.supabase.co data:; connect-src https://kjztmyosougifuneyhqw.supabase.co; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https://mqzbgtndjpaxjootlgqi.supabase.co data:; connect-src https://mqzbgtndjpaxjootlgqi.supabase.co; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>MyVerse 관리자 · 분석</title>
 <style>
 :root{color-scheme:light dark}
@@ -73,7 +73,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#f0f8ff}
   <p class="err" id="err"></p><p class="muted">관리자 계정만 접근할 수 있어요.</p>
 </div></div>
 <script>
-const URL_="https://kjztmyosougifuneyhqw.supabase.co",ANON="sb_publishable_0SXwirhFLFZ_kqp41GcP0g_cILZcP3E";
+const URL_="https://mqzbgtndjpaxjootlgqi.supabase.co",ANON="sb_publishable_MPpJx2zEN_W_ETaE3AmXfw_VGtY6D_n";
 let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
@@ -89,7 +89,7 @@ async function api(body){
 }
 function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 // 이미지 src 전용: 우리 스토리지 URL만 허용 + 이스케이프 (유저가 쓸 수 있는 media_urls 경유 XSS 차단)
-function simg(u){u=String(u||'');return u.indexOf('https://kjztmyosougifuneyhqw.supabase.co/storage/')===0?esc(u):''}
+function simg(u){u=String(u||'');return u.indexOf('https://mqzbgtndjpaxjootlgqi.supabase.co/storage/')===0?esc(u):''}
 function rel(iso){if(!iso)return'';const s=(Date.now()-new Date(iso))/1000;if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분';if(s<86400)return Math.floor(s/3600)+'시간';if(s<604800)return Math.floor(s/86400)+'일';return Math.floor(s/604800)+'주'}
 const N=n=>(n||0).toLocaleString('en-US');
 const D=n=>'$'+(n||0).toFixed(4);
