@@ -77,6 +77,12 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .pmeta{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .tag2{font-size:11px;color:#4b5563;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
 @media(prefers-color-scheme:dark){.tag2{background:#1e222a;border-color:#2a2f37;color:#98a1b0}}
+/* ── 배포 탭 서브탭(페르소나/게시물) ── */
+.stabs{display:flex;gap:6px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:6px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
+@media(prefers-color-scheme:dark){.stabs{background:#171a1f;border-color:#2a2f37}}
+.stab{flex:1;width:auto;margin:0;padding:9px 10px;font-size:13.5px;font-weight:700;border:0;border-radius:6px;background:transparent;color:#667085;cursor:pointer}
+.stab.on{background:#2f6feb;color:#ffffff}
+.stab .c{font-weight:600;opacity:.85;font-variant-numeric:tabular-nums}
 /* ── 이미지 검수 그리드 ── */
 .prog{height:6px;background:#eceff3;border-radius:3px;overflow:hidden;margin-top:10px}
 .progf{height:100%;background:#2f6feb}
@@ -425,12 +431,19 @@ function uploadPanel(){
     +(UP.msg?'<div class="'+(UP.ok?'muted':'err')+'" style="font-weight:600">'+esc(UP.msg)+'</div>':'')
     +'</div></details>';
 }
+// 배포 탭 서브탭: 페르소나 / 게시물 (한 화면에 다 쌓으면 게시물 보려고 한참 스크롤해야 함)
+let PSUB='persona';
+function setPSub(v){PSUB=v;if(LAST)render(LAST);window.scrollTo(0,0)}
 function pendingTab(){
   if(!PEND&&!PEND_BUSY)loadPending();
   if(!PEND)return'<p class="muted">승인 대기 불러오는 중…</p>';
   if(PEND.error)return'<p class="err">불러오기 실패: '+esc(PEND.error)+'</p>';
   let h='<div class="panel"><h2>배포 게이트 — 검증 후 배포</h2><p class="muted">GPT 이미지로 생성된 게시물·새 페르소나는 여기서 <b>검증하고 배포</b>해야 유저에게 노출돼요(통매음·음란물 방지). 이미지·내용을 직접 확인하고 배포/거부하세요.</p>'
     +'<div class="kpis"><div class="kpi"><b>'+N(PEND.pendingUserPersonas||0)+'</b><span>유저 제작 대기</span></div><div class="kpi"><b>'+N(PEND.pendingPersonas)+'</b><span>전체 대기 페르소나</span></div><div class="kpi"><b>'+N(PEND.pendingPosts)+'</b><span>배포 대기 게시물</span></div></div></div>';
+  h+='<div class="stabs">'
+    +'<button class="stab'+(PSUB==='persona'?' on':'')+'" onclick="setPSub(\'persona\')">페르소나 <span class="c">'+N(PEND.pendingPersonas||0)+'</span></button>'
+    +'<button class="stab'+(PSUB==='post'?' on':'')+'" onclick="setPSub(\'post\')">게시물 <span class="c">'+N(PEND.pendingPosts||0)+'</span></button></div>';
+  if(PSUB==='persona'){
   // ★유저 제작 페르소나(우선 검토) — 다른 유저가 만든 AI가 검수 대기로 넘어온 것. 작성자 표시.
   if((PEND.userPersonas||[]).length){
     h+='<div class="panel"><h2>유저 제작 페르소나 ('+(PEND.userPersonas.length)+') <span class="tag2">검수 우선</span></h2><p class="muted">다른 유저가 만든 AI예요. 문제 없으면 배포하세요.</p>'+PEND.userPersonas.map(p=>{const av=p.avatar||{};const ds=(p.dm_style&&p.dm_style.samples)||[];return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">만든 사람: '+esc(p.creator_nickname||(p.created_by?p.created_by.slice(0,8)+'…':'?'))+'</span></div>'
@@ -444,6 +457,9 @@ function pendingTab(){
     h+='<div class="panel"><h2>시스템 생성 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
       +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
       +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">거부</button></div></div>'}).join('')+'</div>';
+  }
+  if(!(PEND.userPersonas||[]).length&&!(PEND.personas||[]).length)h+='<p class="muted">배포 대기 중인 페르소나가 없어요.</p>';
+  return h;
   }
   // 대기 게시물
   h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">새 게시물 ('+(PEND.posts||[]).length+')</h2>'+((PEND.posts||[]).length?'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAll()">모두 배포</button>':'')+'</div>'
