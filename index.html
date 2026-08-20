@@ -77,6 +77,21 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .pmeta{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .tag2{font-size:11px;color:#4b5563;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
 @media(prefers-color-scheme:dark){.tag2{background:#1e222a;border-color:#2a2f37;color:#98a1b0}}
+/* ── 설정(게시물 스케줄) ── */
+.hgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:5px;margin:8px 0 4px}
+.hb{width:auto;margin:0;padding:8px 0;font-size:12px;font-weight:700;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer;font-variant-numeric:tabular-nums;position:relative}
+.hb.on{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+.hb .n{display:block;font-size:9px;font-weight:600;opacity:.7}
+@media(prefers-color-scheme:dark){.hb{border-color:#2a2f37}}
+.dgrid{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+.db{width:auto;margin:0;padding:7px 14px;font-size:12.5px;font-weight:700;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.db.on{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+@media(prefers-color-scheme:dark){.db{border-color:#2a2f37}}
+.frow{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.frow label{font-size:13px;color:#667085;font-weight:600;min-width:120px}
+.frow input[type=number]{width:80px;margin:0;padding:7px 9px;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;font-size:13px}
+.sw2{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.hint{font-size:12px;color:#667085;line-height:1.6}
 /* ── 배포 탭 서브탭(페르소나/게시물) ── */
 .stabs{display:flex;gap:6px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:6px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
 @media(prefers-color-scheme:dark){.stabs{background:#171a1f;border-color:#2a2f37}}
@@ -714,17 +729,87 @@ function imagesTab(){
     +'<button onclick="imgPage('+((IMG.page||0)+1)+')"'+((IMG.page||0)>=pages-1?' disabled':'')+'>다음</button></div>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
+// ── 설정 탭: 페르소나 게시물 생성 스케줄 ──
+// 크론은 매시 정각에 깨고, 실제 생성 여부·개수는 여기 설정이 정한다(설정 안 맞으면 그 시각은 건너뜀).
+let SET=null,SET_BUSY=false,SET_DRAFT=null,SET_MSG='';
+const DAYS=['일','월','화','수','목','금','토'];
+async function loadSettings(){
+  if(SET_BUSY)return;SET_BUSY=true;if(LAST)render(LAST);
+  try{SET=await api({view:'settings'})}catch(e){SET={error:String(e)}}
+  SET_DRAFT=null;SET_BUSY=false;if(LAST)render(LAST);
+}
+function draft(){
+  if(!SET_DRAFT){const p=(SET&&SET.settings&&SET.settings.persona_posts)||{};
+    SET_DRAFT={enabled:p.enabled!==false,hours:(p.hours||[8,12,15,18,21]).slice(),days:(p.days||[0,1,2,3,4,5,6]).slice(),
+      per_run:p.per_run||6,rich_per_run:p.rich_per_run==null?2:p.rich_per_run,
+      respect_chronotype:p.respect_chronotype!==false,approved_only:p.approved_only!==false};}
+  return SET_DRAFT;
+}
+function togHour(h){const d=draft();const i=d.hours.indexOf(h);if(i<0)d.hours.push(h);else d.hours.splice(i,1);SET_MSG='';if(LAST)render(LAST)}
+function togDay(n){const d=draft();const i=d.days.indexOf(n);if(i<0)d.days.push(n);else d.days.splice(i,1);SET_MSG='';if(LAST)render(LAST)}
+function setField(k,v){const d=draft();d[k]=(k==='per_run'||k==='rich_per_run')?Number(v):v;SET_MSG='';if(k!=='per_run'&&k!=='rich_per_run'&&LAST)render(LAST)}
+function hoursPreset(kind){const d=draft();
+  d.hours=kind==='active'?[8,12,15,18,21]:kind==='wide'?[7,9,11,13,15,17,19,21,23]:kind==='all'?Array.from({length:24},(_,i)=>i):[12,20];
+  SET_MSG='';if(LAST)render(LAST)}
+async function saveSettings(){
+  const d=draft();
+  if(!d.hours.length||!d.days.length){alert('시각과 요일을 최소 1개씩 선택하세요.');return}
+  try{await api({action:'save_settings',key:'persona_posts',value:d})}catch(e){alert('저장 실패: '+e);return}
+  SET_MSG='저장했어요. 다음 정각부터 이 스케줄로 돌아갑니다.';
+  await loadSettings();
+}
+async function runPostsNow(){
+  const n=Number(prompt('지금 몇 개 생성할까요? (1~12)','3')||0);
+  if(!n)return;
+  SET_MSG='생성 중…';if(LAST)render(LAST);
+  try{const r=await api({action:'run_posts_now',count:n});SET_MSG='생성 요청 완료: '+JSON.stringify(r.result||{}).slice(0,120)}
+  catch(e){SET_MSG='실패: '+e}
+  await loadSettings();
+}
+function settingsTab(){
+  if(!SET&&!SET_BUSY)loadSettings();
+  if(!SET)return'<p class="muted">설정 불러오는 중…</p>';
+  if(SET.error)return'<p class="err">불러오기 실패: '+esc(SET.error)+'</p>';
+  const d=draft(),by=SET.byHour||[],mx=Math.max(1,...by);
+  const upd=(SET.settings&&SET.settings.persona_posts&&SET.settings.persona_posts.updated_at)||null;
+  let h='<div class="panel"><h2>게시물 생성 스케줄</h2>'
+    +'<p class="hint">크론이 <b>매시 정각</b>에 확인해서, 아래에서 <b>켠 시각</b>에만 게시물을 만듭니다. 켜진 시각이 없으면 아무것도 만들지 않아요. 하루 생성량 ≈ 켠 시각 수 × 회당 개수.</p>'
+    +'<div class="kpis" style="margin-top:10px">'+kpi(N(d.hours.length*d.per_run),'하루 예상 생성','시각 '+d.hours.length+'개 × '+d.per_run)
+    +kpi(N(SET.recentTotal||0),'최근 7일 생성')+kpi(N(SET.pendingPosts||0),'배포 대기 게시물')+kpi(N(SET.approvedPersonas||0),'배포된 페르소나')+'</div>'
+    +(upd?'<p class="muted" style="margin-top:8px">마지막 저장 '+rel(upd)+' 전</p>':'')+'</div>';
+  h+='<div class="panel"><h2>생성 시각 (KST)</h2>'
+    +'<div class="frow" style="gap:6px"><label style="min-width:0">빠른 설정</label>'
+    +'<button class="segb" onclick="hoursPreset(\'active\')">활동시간 5회</button>'
+    +'<button class="segb" onclick="hoursPreset(\'wide\')">2시간 간격</button>'
+    +'<button class="segb" onclick="hoursPreset(\'sparse\')">하루 2회</button>'
+    +'<button class="segb" onclick="hoursPreset(\'all\')">매시간</button></div>'
+    +'<div class="hgrid">'+Array.from({length:24},(_,i)=>'<button class="hb'+(d.hours.indexOf(i)>=0?' on':'')+'" onclick="togHour('+i+')">'+i+'시<span class="n">'+(by[i]||0)+'</span></button>').join('')+'</div>'
+    +'<p class="hint">숫자 아래 작은 값은 <b>최근 7일 그 시각에 실제로 만들어진 게시물 수</b>예요(설정이 먹고 있는지 확인용).</p>'
+    +'<h2 style="margin-top:16px">요일</h2><div class="dgrid">'+DAYS.map((n,i)=>'<button class="db'+(d.days.indexOf(i)>=0?' on':'')+'" onclick="togDay('+i+')">'+n+'</button>').join('')+'</div>'
+    +'</div>';
+  h+='<div class="panel"><h2>생성량·조건</h2>'
+    +'<div class="frow"><label>회당 생성 개수</label><input type="number" min="1" max="12" value="'+d.per_run+'" onchange="setField(\'per_run\',this.value)"><span class="muted">1~12</span></div>'
+    +'<div class="frow"><label>회당 포토덤프</label><input type="number" min="0" max="4" value="'+d.rich_per_run+'" onchange="setField(\'rich_per_run\',this.value)"><span class="muted">여러 장 사진 묶음 개수(0~4)</span></div>'
+    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.enabled?'checked':'')+' onchange="setField(\'enabled\',this.checked)"> 자동 생성 켜기</span></label></div>'
+    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.respect_chronotype?'checked':'')+' onchange="setField(\'respect_chronotype\',this.checked)"> 자는 페르소나 제외(크로노타입)</span></label></div>'
+    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.approved_only?'checked':'')+' onchange="setField(\'approved_only\',this.checked)"> 배포된 페르소나만 생성</span></label></div>'
+    +'<p class="hint">배포 안 된 인물의 글은 유저에게 안 보이는데 생성 비용은 그대로 나갑니다 — 특별한 이유가 없으면 켜두세요.</p>'
+    +'<div class="row"><button class="okbtn" onclick="saveSettings()">저장</button><button class="nobtn" onclick="runPostsNow()">지금 생성</button></div>'
+    +(SET_MSG?'<p class="muted" style="margin-top:8px">'+esc(SET_MSG)+'</p>':'')
+    +'</div>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='설정'&&!SET)loadSettings();if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습'];
+  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습','설정'];
   const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null,'이미지':IMG?IMG.total:null};
-  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
+  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='설정'?settingsTab():TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
-  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'){try{LAST=await api({})}catch(_){/*무시*/}return;}
+  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'){try{LAST=await api({})}catch(_){/*무시*/}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
 if(TOKEN)start();
