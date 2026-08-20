@@ -5,7 +5,7 @@
 <style>
 :root{color-scheme:light dark}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Apple SD Gothic Neo',sans-serif;background:#f7f8fa;color:#1c2024}
-@media(prefers-color-scheme:dark){body{background:#0f1115;color:#e5e7eb}.card,.stat,.chart,.kpi,.panel,.modal-box,.ret{background:#171a1f !important;border-color:#2a2f37 !important}.thumb,.pimg,.pfimg{background:#2a2f37}.bar-bg{fill:#2a2f37}table{border-color:#2a2f37}th{background:#1e222a !important}tr:hover td,tr.clk:hover td{background:#1e2228}.badge{filter:brightness(1.1)}}
+@media(prefers-color-scheme:dark){body{background:#0f1115;color:#e5e7eb}.card,.stat,.chart,.kpi,.panel,.modal-box,.ret,.icard{background:#171a1f !important;border-color:#2a2f37 !important}.thumb,.pimg,.pfimg{background:#2a2f37}.bar-bg{fill:#2a2f37}table{border-color:#2a2f37}th{background:#1e222a !important}tr:hover td,tr.clk:hover td{background:#1e2228}.badge{filter:brightness(1.1)}}
 header{position:sticky;top:0;background:inherit;border-bottom:1px solid #e1e4e8;padding:12px 20px;z-index:10}
 h1{font-size:18px;margin:0;font-weight:800}h2{font-size:15px;margin:18px 0 8px;font-weight:800}.muted{color:#667085;font-size:13px}
 .wrap{max-width:1040px;margin:0 auto;padding:14px 18px 80px}
@@ -77,6 +77,46 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .pmeta{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .tag2{font-size:11px;color:#4b5563;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
 @media(prefers-color-scheme:dark){.tag2{background:#1e222a;border-color:#2a2f37;color:#98a1b0}}
+/* ── 이미지 검수 그리드 ── */
+.prog{height:6px;background:#eceff3;border-radius:3px;overflow:hidden;margin-top:10px}
+.progf{height:100%;background:#2f6feb}
+@media(prefers-color-scheme:dark){.prog{background:#2a2f37}}
+.ibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
+@media(prefers-color-scheme:dark){.ibar{background:#171a1f;border-color:#2a2f37}}
+.ibar .sel{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.ibar button{width:auto;margin:0;padding:5px 11px;font-size:12.5px;font-weight:600;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.ibar button.pri{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+.ibar button.dng{color:#c0362c}
+.ibar button:disabled{opacity:.45;cursor:default}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px}
+.icard{position:relative;background:#ffffff;border:1px solid #e1e4e8;border-radius:9px;overflow:hidden}
+.icard.on{outline:2px solid #2f6feb;outline-offset:-2px}
+.iw{position:relative;aspect-ratio:1/1;background:#f2f4f7;cursor:zoom-in}
+.iw img{width:100%;height:100%;object-fit:cover;display:block}
+.noimg{display:flex;align-items:center;justify-content:center;height:100%;color:#98a2b3;font-size:11px}
+.icheck{position:absolute;top:6px;left:6px;z-index:2;width:17px;height:17px;cursor:pointer}
+.ibadge{position:absolute;top:6px;right:6px;z-index:2;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(17,20,26,.72);color:#ffffff}
+.ibadge.ok{background:rgba(29,120,66,.85)}
+.ib{padding:6px 8px 4px}
+.inm{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imeta{font-size:11px;color:#667085;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ips{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:2px 8px 0}
+.ips img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px;background:#f2f4f7;cursor:zoom-in}
+.ips .ne{aspect-ratio:1/1;border-radius:3px;background:#f2f4f7;border:1px dashed #d0d5dd}
+@media(prefers-color-scheme:dark){.ips .ne{background:#1e222a;border-color:#2a2f37}}
+.ibtns{display:flex;gap:4px;padding:6px 8px 8px}
+.ibtns button{flex:1;width:auto;margin:0;padding:4px 0;font-size:11px;font-weight:600;border:1px solid #d0d5dd;border-radius:5px;background:transparent;color:inherit;cursor:pointer}
+.ibtns button.ok{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+.ibtns button.no{color:#c0362c}
+@media(prefers-color-scheme:dark){.ibtns button,.ibar button{border-color:#2a2f37}}
+.pager{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 4px;font-size:12.5px;color:#667085}
+.pager button{width:auto;margin:0;padding:5px 12px;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px}
+.lb img{max-width:92vw;max-height:76vh;border-radius:8px;object-fit:contain}
+.lbc{color:#e5e7eb;font-size:13px;text-align:center}
+.lbb{display:flex;gap:8px}
+.lbb button{width:auto;margin:0;padding:7px 14px;font-size:12.5px;font-weight:600;border:1px solid #4b5563;border-radius:6px;background:transparent;color:#e5e7eb;cursor:pointer}
+.lbb button.pri{background:#2f6feb;border-color:#2f6feb;color:#ffffff}
 /* ── 검토함(법적 언어) ── */
 .flag{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#ffffff}
 @media(prefers-color-scheme:dark){.flag{background:#171a1f;border-color:#2a2f37}}
@@ -536,17 +576,139 @@ function flagsTab(){
       +'</div>').join(''):'<p class="muted">해당 조건의 항목이 없어요.</p>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
+// ── 이미지 검수 그리드 탭 ──
+// 792명 규모를 눈으로 훑는 화면. 서버는 view:'images'로 페이지당 60명 + 진행률(보유/큐)을 준다.
+let IMG=null,IMG_BUSY=false,IMG_PAGE=0,IMG_SEL={},IMG_MSG='';
+let IMGF={style:'all',gender:'all',nat:'all',genre:'all',has:'all',approved:'all'};
+const GENRES=['학원','판타지','액션','로맨스','일상','이세계'];
+async function loadImages(keepSel){
+  if(IMG_BUSY)return;IMG_BUSY=true;if(LAST)render(LAST);
+  try{IMG=await api({view:'images',page:IMG_PAGE,pageSize:60,filters:IMGF})}catch(e){IMG={error:String(e)}}
+  if(!keepSel)IMG_SEL={};
+  IMG_BUSY=false;if(LAST)render(LAST);
+}
+function setIF(k,v){IMGF[k]=v;IMG_PAGE=0;IMG_MSG='';loadImages()}
+function imgPage(n){IMG_PAGE=Math.max(0,n);IMG_MSG='';loadImages();window.scrollTo(0,0)}
+function iseg(label,cur,opts,key){return'<div class="seg"><span class="segl">'+label+'</span>'+opts.map(o=>'<button class="segb'+(cur===o.v?' on':'')+'" onclick="setIF(\''+key+'\',\''+o.v+'\')">'+esc(o.l)+'</button>').join('')+'</div>'}
+// 선택 토글은 전체 리렌더 없이 DOM만 갱신(60장 이미지 재로딩 방지)
+function selImg(id,el){
+  if(IMG_SEL[id])delete IMG_SEL[id];else IMG_SEL[id]=1;
+  const c=document.getElementById('ic_'+id);if(c)c.classList.toggle('on',!!IMG_SEL[id]);
+  const n=document.getElementById('iseln');if(n)n.textContent=Object.keys(IMG_SEL).length;
+}
+function selAllImg(on){
+  IMG_SEL={};
+  if(on)(IMG&&IMG.rows||[]).forEach(r=>{IMG_SEL[r.id]=1});
+  if(LAST)render(LAST);
+}
+function imgRow(id){return((IMG&&IMG.rows)||[]).find(x=>x.id===id)}
+// slot: 1=프로필(아바타), 2~6=사진 슬롯. 사진 함수의 slots 파라미터와 같은 번호 체계.
+function lbUrl(r,slot){return slot>1?((r.photos||[])[slot-1]||''):(r.image||'')}
+function big(u){return String(u||'').replace(/width=\d+/,'width=900').replace(/height=\d+/,'height=1100').replace(/quality=\d+/,'quality=85')}
+function lb(id,slot){
+  const r=imgRow(id);if(!r)return;const u=simg(lbUrl(r,slot));if(!u)return;
+  modalOpen=true;
+  document.body.insertAdjacentHTML('beforeend','<div class="lb" id="lb" onclick="if(event.target.id==\'lb\')closeLb()">'
+    +'<img src="'+big(u)+'">'
+    +'<div class="lbc">'+esc(r.name||'')+' · '+(slot>1?'사진 '+slot:'프로필')+' · '+(r.approved?'배포됨':'배포 대기')+'</div>'
+    +'<div class="lbb"><button class="pri" onclick="regenOne(\''+id+'\',\''+(slot>1?'photos':'avatar')+'\','+(slot>1?slot:0)+',true)">이 이미지 재생성</button>'
+    +'<button onclick="closeLb()">닫기</button></div></div>');
+}
+function closeLb(){modalOpen=false;const e=document.getElementById('lb');if(e)e.remove()}
+async function approveImg(id,ok){
+  try{await api({action:ok?'approve_persona':'reject_persona',id})}catch(e){alert('실패: '+e);return}
+  IMG_MSG=(ok?'배포':'거부')+' 처리했어요.';
+  await loadImages(true);
+}
+// 재생성은 즉시 그리는 게 아니라 ai_jobs 큐에 넣는다(이미지 1장 수십 초 → 엣지 동기 처리 불가).
+async function regenOne(id,kind,slot,fromLb){
+  const r=imgRow(id);
+  if(!confirm((r?r.name:'')+' — '+(kind==='photos'?(slot?'사진 '+slot+'번':'사진'):'프로필')+'을(를) 재생성 큐에 넣을까요? (장당 약 $0.04)'))return;
+  try{await api({action:'regen_images',id,kind,slots:(kind==='photos'&&slot)?[slot]:undefined})}catch(e){alert('실패: '+e);return}
+  if(fromLb)closeLb();
+  IMG_MSG='재생성 큐에 넣었어요. 워커가 처리하면 이미지가 바뀝니다.';
+  await loadImages(true);
+}
+async function bulkImg(action){
+  const ids=Object.keys(IMG_SEL);
+  if(!ids.length){alert('선택된 페르소나가 없어요.');return}
+  const label={approve:'배포',reject:'거부(비공개)',avatar:'프로필 재생성',photos:'사진 재생성'}[action];
+  const cost=(action==='avatar'||action==='photos')?' 이미지 '+ids.length+'장 ≈ $'+(ids.length*0.04).toFixed(2)+'.':'';
+  if(!confirm(ids.length+'명을 '+label+'할까요?'+cost))return;
+  try{
+    if(action==='approve')await api({action:'approve_persona',ids});
+    else if(action==='reject')await api({action:'reject_persona',ids});
+    else await api({action:'regen_images',ids,kind:action==='photos'?'photos':'avatar'});
+  }catch(e){alert('실패: '+e);return}
+  IMG_MSG=ids.length+'명 '+label+' 완료.';
+  IMG_SEL={};await loadImages();
+}
+function imagesTab(){
+  if(!IMG&&!IMG_BUSY)loadImages();
+  if(!IMG)return'<p class="muted">이미지 불러오는 중…</p>';
+  if(IMG.error)return'<p class="err">불러오기 실패: '+esc(IMG.error)+'</p>';
+  const st=IMG.stats||{},tot=st.personasTotal||0;
+  const pct=tot?Math.round((st.haveAvatar||0)/tot*100):0;
+  let h='<div class="panel"><h2>이미지 검수</h2><p class="muted">생성된 프로필·사진을 한눈에 보고 <b>배포/거부</b>하거나, 마음에 안 드는 이미지를 <b>재생성</b>해요. 재생성은 큐에 들어가고 워커가 순서대로 처리해요(즉시 바뀌지 않아요).</p>'
+    +'<div class="kpis">'+kpi(N(st.haveAvatar||0)+' / '+N(tot),'프로필 생성',pct+'%')
+    +kpi(N(st.havePhotos||0),'사진 세트 보유')+kpi(N(st.qPending||0),'생성 대기 큐')
+    +kpi(N(st.qDone||0),'생성 완료')+kpi(N(st.qFailed||0),'실패')+'</div>'
+    +'<div class="prog"><div class="progf" style="width:'+pct+'%"></div></div></div>';
+  h+='<div class="fbar">'
+    +iseg('유형',IMGF.style,[{v:'all',l:'전체'},{v:'real',l:'실사'},{v:'anime',l:'🎨 애니'}],'style')
+    +iseg('성별',IMGF.gender,[{v:'all',l:'전체'},{v:'female',l:'여성'},{v:'male',l:'남성'}],'gender')
+    +(IMGF.style==='anime'
+       ?iseg('장르',IMGF.genre,[{v:'all',l:'전체'}].concat(GENRES.map(g=>({v:g,l:g}))),'genre')
+       :iseg('국적',IMGF.nat,[{v:'all',l:'전체'},{v:'korean',l:'🇰🇷 한국'},{v:'japanese',l:'🇯🇵 일본'},{v:'chinese',l:'🇨🇳 중국'},{v:'western',l:'🇺🇸 서구'}],'nat'))
+    +iseg('이미지',IMGF.has,[{v:'all',l:'전체'},{v:'yes',l:'있음'},{v:'no',l:'없음'},{v:'nophoto',l:'사진 없음'}],'has')
+    +iseg('배포',IMGF.approved,[{v:'all',l:'전체'},{v:'no',l:'대기'},{v:'yes',l:'배포됨'}],'approved')
+    +'<span class="fcount">'+N(IMG.total||0)+'명 · '+((IMG.page||0)+1)+'페이지</span></div>';
+  const allOn=(IMG.rows||[]).length>0&&(IMG.rows||[]).every(r=>IMG_SEL[r.id]);
+  h+='<div class="ibar"><label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(allOn?'checked':'')+' onchange="selAllImg(this.checked)"> 이 페이지 전체</label>'
+    +'<span class="sel">선택 <span id="iseln">'+Object.keys(IMG_SEL).length+'</span>명</span>'
+    +'<button class="pri" onclick="bulkImg(\'approve\')">일괄 배포</button>'
+    +'<button class="dng" onclick="bulkImg(\'reject\')">일괄 거부</button>'
+    +'<button onclick="bulkImg(\'avatar\')">프로필 재생성</button>'
+    +'<button onclick="bulkImg(\'photos\')">사진 재생성</button>'
+    +'<button onclick="loadImages(true)">새로고침</button>'
+    +(IMG_MSG?'<span class="muted" style="font-size:12px">'+esc(IMG_MSG)+'</span>':'')+'</div>';
+  const cards=(IMG.rows||[]).map(p=>{
+    const img=simg(p.image);
+    const ph=(p.photos||[]).slice(1,6);
+    let strip='';
+    for(let i=0;i<5;i++){const u=simg(ph[i]);strip+=u?'<img src="'+u+'" loading="lazy" onclick="lb(\''+p.id+'\','+(i+2)+')">':'<div class="ne"></div>'}
+    const tags=(p.style==='anime'?'🎨 '+esc(p.genre||'애니'):(NAT_LABEL[p.nationality]||''))+(p.gender?' · '+(GEN_LABEL[p.gender]||''):'');
+    return'<div class="icard'+(IMG_SEL[p.id]?' on':'')+'" id="ic_'+p.id+'">'
+      +'<input type="checkbox" class="icheck"'+(IMG_SEL[p.id]?' checked':'')+' onchange="selImg(\''+p.id+'\',this)">'
+      +'<span class="ibadge'+(p.approved?' ok':'')+'">'+(p.approved?'배포':'대기')+'</span>'
+      +'<div class="iw"'+(img?' onclick="lb(\''+p.id+'\',1)"':'')+'>'+(img?'<img src="'+img+'" loading="lazy">':'<div class="noimg">이미지 없음</div>')+'</div>'
+      +'<div class="ib"><div class="inm">'+esc(p.name||'')+(p.by_user?' <span class="tag2">유저</span>':'')+'</div><div class="imeta">'+tags+'</div></div>'
+      +'<div class="ips">'+strip+'</div>'
+      +'<div class="ibtns">'+(p.approved
+        ?'<button class="no" onclick="approveImg(\''+p.id+'\',false)">거부</button>'
+        :'<button class="ok" onclick="approveImg(\''+p.id+'\',true)">배포</button>')
+      +'<button onclick="regenOne(\''+p.id+'\',\'avatar\',0)">↻프로필</button>'
+      +(img?'<button onclick="regenOne(\''+p.id+'\',\'photos\',0)">↻사진</button>':'')
+      +'</div></div>';
+  }).join('')||'<p class="muted">조건에 맞는 페르소나가 없어요.</p>';
+  h+='<div class="igrid">'+cards+'</div>';
+  const pages=Math.max(1,Math.ceil((IMG.total||0)/(IMG.pageSize||60)));
+  h+='<div class="pager"><button onclick="imgPage('+((IMG.page||0)-1)+')"'+((IMG.page||0)<=0?' disabled':'')+'>이전</button>'
+    +'<span>'+((IMG.page||0)+1)+' / '+pages+'</span>'
+    +'<button onclick="imgPage('+((IMG.page||0)+1)+')"'+((IMG.page||0)>=pages-1?' disabled':'')+'>다음</button></div>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','검수','학습'];
-  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null};
-  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
+  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습'];
+  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null,'이미지':IMG?IMG.total:null};
+  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
-  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'){try{LAST=await api({})}catch(_){/*무시*/}return;}
+  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'){try{LAST=await api({})}catch(_){/*무시*/}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
 if(TOKEN)start();
