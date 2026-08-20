@@ -65,6 +65,28 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .modal-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;max-width:760px;width:100%;padding:18px 20px;margin:auto}
 .mx{float:right;font-size:22px;cursor:pointer;color:#667085;background:none;border:0;width:auto;padding:0;margin:0}
 .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
+/* ── 필터바(페르소나) ── */
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+@media(prefers-color-scheme:dark){.fbar{background:#171a1f;border-color:#2a2f37}}
+.seg{display:flex;align-items:center;gap:6px}
+.segl{font-size:12px;color:#667085;font-weight:700;margin-right:2px}
+.segb{width:auto;margin:0;padding:5px 11px;font-size:12.5px;font-weight:600;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.segb.on{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+@media(prefers-color-scheme:dark){.segb{border-color:#2a2f37}}
+.fcount{margin-left:auto;font-size:12px;color:#667085;font-variant-numeric:tabular-nums}
+.pmeta{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.tag2{font-size:11px;color:#4b5563;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
+@media(prefers-color-scheme:dark){.tag2{background:#1e222a;border-color:#2a2f37;color:#98a1b0}}
+/* ── 검토함(법적 언어) ── */
+.flag{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#ffffff}
+@media(prefers-color-scheme:dark){.flag{background:#171a1f;border-color:#2a2f37}}
+.flag .fh{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.flag .cat{font-size:11px;font-weight:700;color:#ffffff;padding:2px 8px;border-radius:5px}
+.flag .who{font-weight:600}.flag .src{font-size:11px;color:#667085}.flag .ft{margin-left:auto;font-size:11px;color:#8b93a1}
+.flag .body{font-size:13.5px;line-height:1.5;white-space:pre-wrap;background:#f2f4f7;border-radius:6px;padding:8px 10px}
+@media(prefers-color-scheme:dark){.flag .body{background:#1e222a}}
+.flag .mm{font-size:11px;color:#c0362c;margin-top:5px}
+.flag .row{margin-top:8px}
 /* ── 탐색(BigQuery 스타일) ── */
 .exp{display:grid;grid-template-columns:230px 1fr;gap:12px;align-items:start}
 @media(max-width:720px){.exp{grid-template-columns:1fr}}
@@ -204,14 +226,42 @@ function postsTab(d){return(d.posts||[]).length?d.posts.map(p=>{const im=(p.medi
 function usersTab(d){return'<div class="panel">'+tbl('<th>닉네임</th><th>이메일</th><th class="n">게시물</th><th class="n">DM</th><th class="n">오늘AI</th><th class="n">팔로워</th><th>활동</th>',
   (d.users||[]).map(u=>'<tr class="clk" onclick="drill(\'user\',\''+u.id+'\')"><td>'+esc(u.nickname||'-')+'</td><td class="muted">'+esc(u.email||'-')+'</td><td class="n">'+u.posts+'</td><td class="n">'+u.dms+'</td><td class="n">'+u.ai_today+'</td><td class="n">'+u.followers+'</td><td>'+rel(u.last_active)+'</td></tr>').join(''))+'<p class="muted" style="margin:8px 2px 0">행을 누르면 상세 →</p></div>'}
 function gal(image,photos){const g=[image,...(photos||[])].map(simg).filter((u,i,a)=>u&&a.indexOf(u)===i);return g.length?'<div class="pgal">'+g.map((u,i)=>'<img class="pimg" src="'+u+'" loading="lazy" title="'+(i===0?'프로필':'사진'+i)+'">').join('')+'</div>':'<div class="muted">이미지 없음</div>'}
-function personasTab(d){return(d.personas||[]).map(p=>{const posts=(p.recent_posts||[]).filter(x=>x.image_url||x.content);
+// 페르소나 필터 상태(성별·국적·정렬)
+let PF={gender:'all',nat:'all',sort:'rating'};
+const NAT_LABEL={korean:'🇰🇷 한국',japanese:'🇯🇵 일본',chinese:'🇨🇳 중국',western:'🇺🇸 서구',all:'전체'};
+const GEN_LABEL={female:'여성',male:'남성',all:'전체'};
+function setPF(k,v){PF[k]=v;if(LAST)render(LAST)}
+function seg(label,cur,opts,key){return'<div class="seg"><span class="segl">'+label+'</span>'+opts.map(o=>'<button class="segb'+(cur===o.v?' on':'')+'" onclick="setPF(\''+key+'\',\''+o.v+'\')">'+esc(o.l)+'</button>').join('')+'</div>'}
+function personasTab(d){
+  let list=(d.personas||[]).slice();
+  if(PF.gender!=='all')list=list.filter(p=>(p.gender||'')===PF.gender);
+  if(PF.nat!=='all')list=list.filter(p=>(p.nationality||'')===PF.nat);
+  if(PF.sort==='rating')list.sort((a,b)=>(b.rating||0)-(a.rating||0));
+  else if(PF.sort==='users')list.sort((a,b)=>(b.rel_users||0)-(a.rel_users||0));
+  else if(PF.sort==='posts')list.sort((a,b)=>(b.post_count||0)-(a.post_count||0));
+  else list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const bar='<div class="fbar">'
+    +seg('성별',PF.gender,[{v:'all',l:'전체'},{v:'female',l:'여성'},{v:'male',l:'남성'}],'gender')
+    +seg('국적',PF.nat,[{v:'all',l:'전체'},{v:'korean',l:'🇰🇷 한국'},{v:'japanese',l:'🇯🇵 일본'},{v:'chinese',l:'🇨🇳 중국'},{v:'western',l:'🇺🇸 서구'}],'nat')
+    +seg('정렬',PF.sort,[{v:'rating',l:'평점순'},{v:'users',l:'인기순'},{v:'posts',l:'게시물순'},{v:'name',l:'이름순'}],'sort')
+    +'<span class="fcount">'+list.length+'명</span></div>';
+  const cards=list.map(p=>{const posts=(p.recent_posts||[]).filter(x=>x.image_url||x.content);
+  const meta='<div class="pmeta">'
+    +(p.gender?'<span class="tag2">'+GEN_LABEL[p.gender]+'</span>':'')
+    +(p.nationality?'<span class="tag2">'+(NAT_LABEL[p.nationality]||p.nationality)+'</span>':'')
+    +'<span class="tag2">관계 '+(p.rel_users||0)+'</span>'
+    +'<span class="tag2">호감 '+(p.avg_score||0)+'</span>'
+    +'<span class="tag2">평점 '+(p.rating||0)+'</span></div>';
   return'<div class="card clk" onclick="drill(\'persona\',\''+p.id+'\')"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">게시물 '+(p.post_count||0)+'</span></div>'
+    +meta
     +gal(p.image,p.photos)
     +(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')
     +(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
     +(p.face?'<div class="pface"><b>외모앵커</b>'+esc(p.face)+'</div>':'')
     +(posts.length?'<div class="pfeed">'+posts.map(x=>{const im=pimgs(x).map(simg).filter(Boolean);return'<div class="pf">'+(im.length?'<div style="position:relative"><img class="pfimg" src="'+im[0]+'" loading="lazy">'+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="pfx"><div class="pfc">'+esc((x.content||'').slice(0,60))+'</div>'+(x.location?'<div class="ploc">'+esc(x.location)+'</div>':'')+'</div></div>'}).join('')+'</div>':'')
-    +'</div>';}).join('')}
+    +'</div>';}).join('')||'<p class="muted">조건에 맞는 페르소나가 없어요.</p>';
+  return bar+cards;
+}
 
 async function drill(kind,id){
   modalOpen=true;
@@ -436,17 +486,55 @@ function exploreTab(){
   right+='</div>';
   return'<div class="exp">'+tlist+right+'</div>';
 }
-function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(LAST)render(LAST)}
+// ── 검토함(법적 리스크 언어 수집) ──
+let FLAGS=null,FLAGS_BUSY=false,FL_STATUS='pending',FL_CAT='all';
+const CAT_LABEL={threat:'협박·살해예고',drugs:'마약',sexual_crime:'성범죄',weapon:'무기·폭발물',privacy:'개인정보'};
+const CAT_COLOR={threat:'#c0362c',drugs:'#9a3412',sexual_crime:'#7857c9',weapon:'#b45309',privacy:'#4b5563'};
+async function loadFlags(){if(FLAGS_BUSY)return;FLAGS_BUSY=true;if(LAST)render(LAST);
+  try{FLAGS=await api({view:'flags',status:FL_STATUS,category:FL_CAT})}catch(e){FLAGS={error:String(e)}}
+  FLAGS_BUSY=false;if(LAST)render(LAST);}
+function setFlagFilter(k,v){if(k==='status')FL_STATUS=v;else FL_CAT=v;FLAGS=null;loadFlags()}
+async function resolveFlag(id,status){
+  try{await api({action:'resolve_flag',id,status})}catch(e){alert('실패: '+e)}
+  FLAGS=null;await loadFlags();}
+function flagsTab(){
+  if(!FLAGS&&!FLAGS_BUSY)loadFlags();
+  if(!FLAGS)return'<p class="muted">검토함 불러오는 중…</p>';
+  if(FLAGS.error)return'<p class="err">불러오기 실패: '+esc(FLAGS.error)+'</p>';
+  const bc=FLAGS.byCategory||{};
+  let h='<div class="panel"><h2>법적 리스크 언어 검토함</h2><p class="muted">유저가 쓴 게시물·댓글·DM에서 협박·마약·성범죄·무기·개인정보 등 법적 문제 소지 표현을 <b>자동 수집</b>합니다. 즉시 제재하지 않고 여기 모아두니, 내용을 확인해 검토완료·무시·조치로 처리하세요.</p>'
+    +'<div class="kpis"><div class="kpi"><b>'+N(FLAGS.pendingTotal)+'</b><span>검토 대기</span></div>'
+    +Object.keys(CAT_LABEL).map(c=>'<div class="kpi"><b>'+N(bc[c]||0)+'</b><span>'+CAT_LABEL[c]+'</span></div>').join('')+'</div></div>';
+  // 필터바
+  h+='<div class="fbar">'
+    +'<div class="seg"><span class="segl">상태</span>'+[['pending','대기'],['reviewed','검토완료'],['dismissed','무시'],['actioned','조치'],['all','전체']].map(o=>'<button class="segb'+(FL_STATUS===o[0]?' on':'')+'" onclick="setFlagFilter(\'status\',\''+o[0]+'\')">'+o[1]+'</button>').join('')+'</div>'
+    +'<div class="seg"><span class="segl">유형</span><button class="segb'+(FL_CAT==='all'?' on':'')+'" onclick="setFlagFilter(\'cat\',\'all\')">전체</button>'+Object.keys(CAT_LABEL).map(c=>'<button class="segb'+(FL_CAT===c?' on':'')+'" onclick="setFlagFilter(\'cat\',\''+c+'\')">'+CAT_LABEL[c]+'</button>').join('')+'</div>'
+    +'<span class="fcount">'+(FLAGS.flags||[]).length+'건</span></div>';
+  // 목록
+  const srcL={post:'게시물',comment:'댓글',dm:'DM'};
+  h+=(FLAGS.flags||[]).length?FLAGS.flags.map(f=>'<div class="flag"><div class="fh">'
+      +'<span class="cat" style="background:'+(CAT_COLOR[f.category]||'#4b5563')+'">'+(CAT_LABEL[f.category]||f.category)+'</span>'
+      +'<span class="who">'+esc(f.nickname||(f.user_id?f.user_id.slice(0,8)+'…':'(알 수 없음)'))+'</span>'
+      +'<span class="src">'+(srcL[f.source]||f.source)+'</span>'
+      +(f.status!=='pending'?'<span class="tag2">'+esc(f.status)+'</span>':'')
+      +'<span class="ft">'+rel(f.created_at)+' 전</span></div>'
+      +'<div class="body">'+esc(f.content||'')+'</div>'
+      +(f.matched&&f.matched.length?'<div class="mm">매칭: '+esc(f.matched.join(', '))+'</div>':'')
+      +(f.status==='pending'?'<div class="row"><button class="okbtn" onclick="resolveFlag(\''+f.id+'\',\'reviewed\')">검토완료</button><button class="nobtn" onclick="resolveFlag(\''+f.id+'\',\'dismissed\')">무시</button><button class="nobtn" onclick="resolveFlag(\''+f.id+'\',\'actioned\')">조치함</button></div>':'')
+      +'</div>').join(''):'<p class="muted">해당 조건의 항목이 없어요.</p>';
+  return h;
+}
+function setTab(t){TAB=t;if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','탐색','배포','게시물','유저','페르소나','검수','학습'];
-  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null};
-  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
+  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','검수','학습'];
+  const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null};
+  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
-  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'){try{LAST=await api({})}catch(_){/*무시*/}return;}
+  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'){try{LAST=await api({})}catch(_){/*무시*/}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
 if(TOKEN)start();
