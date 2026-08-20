@@ -11,7 +11,7 @@ h1{font-size:18px;margin:0;font-weight:800}h2{font-size:15px;margin:18px 0 8px;f
 .wrap{max-width:1040px;margin:0 auto;padding:14px 18px 80px}
 .login{max-width:340px;margin:80px auto;text-align:center}
 input,button{font-size:15px;padding:12px 14px;border-radius:6px;border:1px solid #d0d5dd;width:100%;margin:6px 0}
-button{background:#2f6feb;color:#ffffff;border:0;font-weight:700;cursor:pointer}
+button{background:#2f6feb;color:#ffffff;border:0;font-weight:600;cursor:pointer}
 .live{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;margin:2px 0 8px}
 .dot{width:8px;height:8px;border-radius:5px;background:#2e8b57;animation:p 2s infinite}@keyframes p{50%{opacity:.3}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
@@ -59,11 +59,12 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .pfeed{display:flex;gap:8px;overflow-x:auto;margin-top:8px}.pf{flex:0 0 150px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}.pfimg{width:100%;height:100px;object-fit:cover;display:block;background:#e5e7eb}.pfx{padding:6px 8px}.pfc{font-size:12px;line-height:1.4}.ploc{font-size:11px;color:#2f6feb;margin-top:3px}
 .err{color:#c0362c;font-size:13px}
 .row{display:flex;gap:8px;margin-top:10px}
-.okbtn,.nobtn{width:auto;flex:1;padding:10px 14px;border-radius:6px;border:0;font-weight:700;cursor:pointer;font-size:14px}
-.okbtn{background:#1f7a44;color:#ffffff}.nobtn{background:#c0362c;color:#ffffff}
+.okbtn,.nobtn{width:auto;flex:1;padding:9px 14px;border-radius:6px;border:0;font-weight:600;cursor:pointer;font-size:13.5px}
+.okbtn{background:#2f6feb;color:#ffffff}.nobtn{background:transparent;color:#c0362c;border:1px solid #d0d5dd}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;z-index:50;overflow-y:auto}
 .modal-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;max-width:760px;width:100%;padding:18px 20px;margin:auto}
 .mx{float:right;font-size:22px;cursor:pointer;color:#667085;background:none;border:0;width:auto;padding:0;margin:0}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
 /* ── 탐색(BigQuery 스타일) ── */
 .exp{display:grid;grid-template-columns:230px 1fr;gap:12px;align-items:start}
 @media(max-width:720px){.exp{grid-template-columns:1fr}}
@@ -127,7 +128,7 @@ function rel(iso){if(!iso)return'';const s=(Date.now()-new Date(iso))/1000;if(s<
 const N=n=>(n||0).toLocaleString('en-US');
 const D=n=>'$'+(n||0).toFixed(4);
 const pimgs=x=>(Array.isArray(x.image_urls)&&x.image_urls.length?x.image_urls:(x.image_url?[x.image_url]:[])).filter(Boolean);
-function dpost(x){const im=pimgs(x).map(simg).filter(Boolean);return'<div class="dpost">'+(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="dpc">'+esc(x.content||'(사진)')+'</div><div class="dpmeta">'+(x.location?'📍'+esc(x.location)+' · ':'')+(x.like_count!=null?'❤ '+x.like_count+' · ':'')+rel(x.created_at)+' 전</div></div>'}
+function dpost(x){const im=pimgs(x).map(simg).filter(Boolean);return'<div class="dpost">'+(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="dpc">'+esc(x.content||'(사진)')+'</div><div class="dpmeta">'+(x.location?esc(x.location)+' · ':'')+(x.like_count!=null?'좋아요 '+x.like_count+' · ':'')+rel(x.created_at)+' 전</div></div>'}
 function kpi(b,l,sub){return'<div class="kpi"><b>'+b+'</b><span>'+l+'</span>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>'}
 // SVG 막대 (일자/시간대)
 function bars(data,keys,colors,labelIdx){
@@ -177,12 +178,12 @@ function analytics(d){
   hr.forEach(x=>x.label=(x.hour%6===0||x.hour===23)?x.hour:'');
   h+='<div class="panel"><h2>시간대별 활동 (KST)</h2>'
     +chartCard('게시물·DM·스와이프','피크 '+(peak?peak.hour+'시':'-'),bars(hr,['dms','posts','swipes'],['#2e8b57','#2f6feb','#b7791f'],[0,6,12,18,23]))
-    +'<div class="muted" style="font-size:11px;margin-top:6px">🟩 DM · 🟦 게시물 · 🟧 스와이프</div></div>';
+    +'<div class="muted" style="font-size:11px;margin-top:6px"><span class="sw" style="background:#2e8b57"></span>DM · <span class="sw" style="background:#2f6feb"></span>게시물 · <span class="sw" style="background:#b7791f"></span>스와이프</div></div>';
   const tl=d.timeline||[];tl.forEach(x=>x.label='');
   h+='<div class="panel"><h2>일자별 추이 (14일)</h2><div class="charts">'
-    +chartCard('📝 게시물','합 '+tl.reduce((a,x)=>a+x.posts,0),bars(tl,['posts'],['#2f6feb'],[0,13]))
-    +chartCard('💬 DM','합 '+tl.reduce((a,x)=>a+x.dms,0),bars(tl,['dms'],['#2e8b57'],[0,13]))
-    +chartCard('🤖 AI','합 '+tl.reduce((a,x)=>a+x.ai,0),bars(tl,['ai'],['#b7791f'],[0,13]))
+    +chartCard('게시물','합 '+tl.reduce((a,x)=>a+x.posts,0),bars(tl,['posts'],['#2f6feb'],[0,13]))
+    +chartCard('DM','합 '+tl.reduce((a,x)=>a+x.dms,0),bars(tl,['dms'],['#2e8b57'],[0,13]))
+    +chartCard('AI','합 '+tl.reduce((a,x)=>a+x.ai,0),bars(tl,['ai'],['#b7791f'],[0,13]))
     +'</div></div>';
   // 기능별 사용량
   const fu=d.featureUsage||[],fumax=Math.max(1,...fu.map(x=>x.count));
@@ -199,17 +200,17 @@ function analytics(d){
   h+='<div class="panel"><h2>이벤트 스트림</h2>'+(d.events||[]).map(e=>'<div class="ev"><span class="badge" style="background:'+(bc[e.type]||'#667085')+'">'+(bl[e.type]||e.type)+'</span><span class="who">'+esc(e.who)+'</span><span class="tx">'+esc(e.text)+'</span><span class="tm">'+rel(e.at)+'</span></div>').join('')+'</div>';
   return h;
 }
-function postsTab(d){return(d.posts||[]).length?d.posts.map(p=>{const im=(p.media_urls||[]).map(simg).filter(Boolean);return'<div class="card"><div class="phead"><b>'+esc(p.author)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'+(im.length?'<div class="thumbs">'+im.map(u=>'<img class="thumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')+(p.content?'<div class="content">'+esc(p.content)+'</div>':'')+(p.media_type==='poll'?'<div class="muted">📊 투표</div>':'')+'</div>'}).join(''):'<p class="muted">게시물 없음</p>'}
+function postsTab(d){return(d.posts||[]).length?d.posts.map(p=>{const im=(p.media_urls||[]).map(simg).filter(Boolean);return'<div class="card"><div class="phead"><b>'+esc(p.author)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'+(im.length?'<div class="thumbs">'+im.map(u=>'<img class="thumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')+(p.content?'<div class="content">'+esc(p.content)+'</div>':'')+(p.media_type==='poll'?'<div class="muted">투표</div>':'')+'</div>'}).join(''):'<p class="muted">게시물 없음</p>'}
 function usersTab(d){return'<div class="panel">'+tbl('<th>닉네임</th><th>이메일</th><th class="n">게시물</th><th class="n">DM</th><th class="n">오늘AI</th><th class="n">팔로워</th><th>활동</th>',
   (d.users||[]).map(u=>'<tr class="clk" onclick="drill(\'user\',\''+u.id+'\')"><td>'+esc(u.nickname||'-')+'</td><td class="muted">'+esc(u.email||'-')+'</td><td class="n">'+u.posts+'</td><td class="n">'+u.dms+'</td><td class="n">'+u.ai_today+'</td><td class="n">'+u.followers+'</td><td>'+rel(u.last_active)+'</td></tr>').join(''))+'<p class="muted" style="margin:8px 2px 0">행을 누르면 상세 →</p></div>'}
 function gal(image,photos){const g=[image,...(photos||[])].map(simg).filter((u,i,a)=>u&&a.indexOf(u)===i);return g.length?'<div class="pgal">'+g.map((u,i)=>'<img class="pimg" src="'+u+'" loading="lazy" title="'+(i===0?'프로필':'사진'+i)+'">').join('')+'</div>':'<div class="muted">이미지 없음</div>'}
 function personasTab(d){return(d.personas||[]).map(p=>{const posts=(p.recent_posts||[]).filter(x=>x.image_url||x.content);
   return'<div class="card clk" onclick="drill(\'persona\',\''+p.id+'\')"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">게시물 '+(p.post_count||0)+'</span></div>'
     +gal(p.image,p.photos)
-    +(p.bio?'<div class="pbio">📝 '+esc(p.bio)+'</div>':'')
+    +(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')
     +(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
     +(p.face?'<div class="pface"><b>외모앵커</b>'+esc(p.face)+'</div>':'')
-    +(posts.length?'<div class="pfeed">'+posts.map(x=>{const im=pimgs(x).map(simg).filter(Boolean);return'<div class="pf">'+(im.length?'<div style="position:relative"><img class="pfimg" src="'+im[0]+'" loading="lazy">'+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="pfx"><div class="pfc">'+esc((x.content||'').slice(0,60))+'</div>'+(x.location?'<div class="ploc">📍 '+esc(x.location)+'</div>':'')+'</div></div>'}).join('')+'</div>':'')
+    +(posts.length?'<div class="pfeed">'+posts.map(x=>{const im=pimgs(x).map(simg).filter(Boolean);return'<div class="pf">'+(im.length?'<div style="position:relative"><img class="pfimg" src="'+im[0]+'" loading="lazy">'+(im.length>1?'<span class="nph">'+im.length+'장</span>':'')+'</div>':'')+'<div class="pfx"><div class="pfc">'+esc((x.content||'').slice(0,60))+'</div>'+(x.location?'<div class="ploc">'+esc(x.location)+'</div>':'')+'</div></div>'}).join('')+'</div>':'')
     +'</div>';}).join('')}
 
 async function drill(kind,id){
@@ -292,13 +293,13 @@ async function approveAll(){
   await loadPending();
 }
 // ── 로컬 제작 이미지 업로드(비용 절감: API 생성 대신 직접 만든 이미지를 페르소나 게시물로) ──
-let UP={file:null,dataUrl:'',persona:'',caption:'',place:'',publish:false,busy:false,msg:''};
+let UP={file:null,dataUrl:'',persona:'',caption:'',place:'',publish:false,busy:false,msg:'',ok:false};
 function upField(k,v){UP[k]=v}
 function upFile(input){const f=input.files&&input.files[0];if(!f)return;UP.file=f;const r=new FileReader();r.onload=()=>{UP.dataUrl=r.result;if(LAST)render(LAST)};r.readAsDataURL(f)}
 async function uploadLocal(){
   if(UP.busy)return;
-  if(!UP.persona){UP.msg='⚠ 페르소나를 선택하세요';if(LAST)render(LAST);return}
-  if(!UP.file){UP.msg='⚠ 이미지를 선택하세요';if(LAST)render(LAST);return}
+  if(!UP.persona){UP.msg='페르소나를 선택하세요';UP.ok=false;if(LAST)render(LAST);return}
+  if(!UP.file){UP.msg='이미지를 선택하세요';UP.ok=false;if(LAST)render(LAST);return}
   UP.busy=true;UP.msg='';if(LAST)render(LAST);
   try{
     const sub=JSON.parse(atob(TOKEN.split('.')[1])).sub;
@@ -309,9 +310,9 @@ async function uploadLocal(){
     const publicUrl=URL_+'/storage/v1/object/public/post-media/'+path;
     const r=await api({action:'create_local_post',persona_id:UP.persona,caption:UP.caption,image_url:publicUrl,place:UP.place,publish:UP.publish});
     if(r&&r.error)throw new Error(r.error);
-    UP.msg=UP.publish?'✅ 즉시 공개했어요':'✅ 배포 대기에 등록했어요';
+    UP.msg=UP.publish?'즉시 공개했어요':'배포 대기에 등록했어요';UP.ok=true;
     UP.file=null;UP.dataUrl='';UP.caption='';UP.place='';
-  }catch(e){UP.msg='⚠ '+(e.message||e)}
+  }catch(e){UP.msg=''+(e.message||e);UP.ok=false}
   UP.busy=false;await loadPending();
 }
 function uploadPanel(){
@@ -327,7 +328,7 @@ function uploadPanel(){
     +'<input placeholder="장소 (선택 · 예: 성수동)" value="'+esc(UP.place)+'" oninput="upField(\'place\',this.value)" style="padding:9px;border:1px solid #d0d5dd;border-radius:8px;background:transparent;color:inherit">'
     +'<label style="display:flex;align-items:center;gap:8px;font-size:14px"><input type="checkbox" onchange="upField(\'publish\',this.checked)"'+(UP.publish?' checked':'')+'> 즉시 공개 (끄면 승인 대기)</label>'
     +'<button class="okbtn" style="width:auto" onclick="uploadLocal()">'+(UP.busy?'업로드 중…':(UP.publish?'업로드 후 즉시 공개':'업로드 (승인 대기)'))+'</button>'
-    +(UP.msg?'<div class="'+(UP.msg[0]==='✅'?'muted':'err')+'" style="font-weight:600">'+esc(UP.msg)+'</div>':'')
+    +(UP.msg?'<div class="'+(UP.ok?'muted':'err')+'" style="font-weight:600">'+esc(UP.msg)+'</div>':'')
     +'</div></details>';
 }
 function pendingTab(){
@@ -339,15 +340,15 @@ function pendingTab(){
   // 대기 페르소나
   if((PEND.personas||[]).length){
     h+='<div class="panel"><h2>새 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
-      +gal(av.image,av.photos)+(p.bio?'<div class="pbio">📝 '+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
-      +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">🚀 배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join('')+'</div>';
+      +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
+      +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">거부</button></div></div>'}).join('')+'</div>';
   }
   // 대기 게시물
   h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">새 게시물 ('+(PEND.posts||[]).length+')</h2>'+((PEND.posts||[]).length?'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAll()">모두 배포</button>':'')+'</div>'
     +((PEND.posts||[]).length?PEND.posts.map(p=>{const im=pimgs(p).map(simg).filter(Boolean);return'<div class="dpost"><div class="phead"><b>'+esc(p.personas?p.personas.name:p.persona_id)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'
       +(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')
-      +'<div class="dpc">'+esc(p.content||'(사진)')+'</div>'+(p.location?'<div class="dpmeta">📍'+esc(p.location)+'</div>':'')
-      +'<div class="row"><button class="okbtn" onclick="approve(\'post\',\''+p.id+'\',true)">🚀 배포</button><button class="nobtn" onclick="approve(\'post\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join(''):'<p class="muted">배포 대기 중인 게시물이 없어요.</p>')+'</div>';
+      +'<div class="dpc">'+esc(p.content||'(사진)')+'</div>'+(p.location?'<div class="dpmeta">'+esc(p.location)+'</div>':'')
+      +'<div class="row"><button class="okbtn" onclick="approve(\'post\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'post\',\''+p.id+'\',false)">거부</button></div></div>'}).join(''):'<p class="muted">배포 대기 중인 게시물이 없어요.</p>')+'</div>';
   h+=uploadPanel(); // 로컬 업로드(보류)는 맨 아래 접힘으로
   return h;
 }
@@ -372,12 +373,12 @@ function trainingTab(){
   h+='<p class="muted" style="margin-top:10px">동의한 유저가 페르소나 게시물에 단 댓글만 비식별로 적재됩니다. 이 데이터로 대화 AI를 파인튜닝해 AI 티를 줄입니다.</p></div>';
   // 최근 수집 샘플
   h+='<div class="panel"><h2>최근 수집 샘플 (게시물 맥락 → 실제 유저 댓글)</h2>';
-  h+=(TRAIN.samples||[]).length?TRAIN.samples.map(s=>'<div class="card"><div class="muted" style="font-size:12px">📄 '+esc(s.context||'(맥락 없음)')+'</div><div style="margin-top:4px">💬 <b>'+esc(s.response)+'</b></div><div class="t">'+rel(s.at)+' 전</div></div>').join(''):'<p class="muted">아직 수집된 댓글이 없어요. 유저가 [설정 > 데이터 활용]에서 동의하면 쌓이기 시작합니다.</p>';
+  h+=(TRAIN.samples||[]).length?TRAIN.samples.map(s=>'<div class="card"><div class="muted" style="font-size:12px">'+esc(s.context||'(맥락 없음)')+'</div><div style="margin-top:4px">💬 <b>'+esc(s.response)+'</b></div><div class="t">'+rel(s.at)+' 전</div></div>').join(''):'<p class="muted">아직 수집된 댓글이 없어요. 유저가 [설정 > 데이터 활용]에서 동의하면 쌓이기 시작합니다.</p>';
   h+='</div>';
   // 학습 이력
   h+='<div class="panel"><h2>어떻게 학습됐나 (파인튜닝 이력)</h2>';
   h+=(TRAIN.runs||[]).length?tbl('<th>일시</th><th>방식</th><th>베이스 모델</th><th class="n">예제수</th><th>loss</th><th>상태</th><th>결과</th>',
-    TRAIN.runs.map(r=>{const st=r.status==='completed'?'✅완료':r.status==='blocked'?'⛔차단':r.status==='failed'?'❌실패':esc(r.status||'');
+    TRAIN.runs.map(r=>{const st=r.status==='completed'?'완료':r.status==='blocked'?'차단':r.status==='failed'?'실패':esc(r.status||'');
       const loss=(r.val_loss_start!=null&&r.val_loss_end!=null)?(r.val_loss_start+'→'+r.val_loss_end):'—';
       return'<tr><td>'+rel(r.created_at)+' 전</td><td>'+esc(r.method||'')+'</td><td>'+esc(r.base_model||'')+'<div class="muted" style="font-size:11px">'+esc(r.dataset||'')+'</div></td><td class="n">'+N(r.examples)+'</td><td>'+loss+'</td><td>'+st+'</td><td style="max-width:280px">'+esc(r.result||'')+(r.notes?'<div class="muted" style="font-size:11px">'+esc(r.notes)+'</div>':'')+'</td></tr>';}).join('')):'<tr><td colspan="7" class="muted">학습 이력 없음</td></tr>';
   h+='</div>';
@@ -410,7 +411,7 @@ function quick(i){SQLTEXT=QUICK[i].q;SEL_TABLE='';runSql()}
 function sortBy(c){if(SORT_COL===c){SORT_DIR=-SORT_DIR}else{SORT_COL=c;SORT_DIR=1}render(LAST)}
 function cellStr(v){if(v===null||v===undefined)return null;if(typeof v==='object')return JSON.stringify(v);return String(v)}
 function grid(res){
-  if(res.error)return'<p class="err">⚠ '+esc(res.error)+'</p>';
+  if(res.error)return'<p class="err">'+esc(res.error)+'</p>';
   const cols=res.columns||[];let rows=(res.rows||[]).slice();
   if(!rows.length)return'<p class="muted">결과가 없어요.</p>';
   if(SORT_COL){rows.sort((a,b)=>{const x=a[SORT_COL],y=b[SORT_COL];if(x===y)return 0;if(x===null||x===undefined)return 1;if(y===null||y===undefined)return -1;return(x>y?1:-1)*SORT_DIR})}
@@ -428,7 +429,7 @@ function exploreTab(){
   let right='<div class="qbox">';
   right+='<div style="display:flex;gap:6px;flex-wrap:wrap">'+QUICK.map((x,i)=>'<button class="chip" onclick="quick('+i+')">'+esc(x.l)+'</button>').join('')+'</div>';
   right+='<textarea class="sqlta" oninput="setSql(this.value)" spellcheck="false" placeholder="SELECT ... (읽기 전용)">'+esc(SQLTEXT)+'</textarea>';
-  right+='<div class="qbar"><button onclick="runSql()"'+(SQL_BUSY?' disabled':'')+'>'+(SQL_BUSY?'실행 중…':'▶ 실행')+'</button>'
+  right+='<div class="qbar"><button onclick="runSql()"'+(SQL_BUSY?' disabled':'')+'>'+(SQL_BUSY?'실행 중…':'실행')+'</button>'
     +'<span class="meta">'+(SQLRES&&!SQLRES.error?N(SQLRES.rowCount)+'행 · '+SQLRES.ms+'ms':'읽기 전용 · 최대 1000행')+'</span></div>';
   if(SEL_TABLE&&SEL_COLS&&SEL_COLS.length){right+='<div class="cols">'+SEL_COLS.map(c=>'<span class="c"><b>'+esc(c.column_name)+'</b> <em>'+esc(c.data_type)+(c.is_nullable==='NO'?' ·NN':'')+'</em></span>').join('')+'</div>'}
   right+=(SQLRES?grid(SQLRES):'<p class="muted">테이블을 선택하거나 SQL을 실행하세요.</p>');
