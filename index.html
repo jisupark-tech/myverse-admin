@@ -158,14 +158,14 @@ function analytics(d){
     +'</div>';
   // 퍼널
   const f=d.funnel||[],fmax=Math.max(1,...f.map(x=>x.count));
-  h+='<div class="panel"><h2>🔻 퍼널 (이탈 분석)</h2>';
+  h+='<div class="panel"><h2>퍼널 (이탈 분석)</h2>';
   f.forEach((st,i)=>{const prev=i>0?f[i-1].count:st.count;const conv=prev?Math.round(st.count/prev*100):100;const drop=prev-st.count;
     h+='<div class="fn"><div class="lab">'+esc(st.stage)+'</div><div class="track"><div class="fill" style="width:'+(st.count/fmax*100)+'%"></div><div class="fc">'+N(st.count)+(i>0?' · '+conv+'%':'')+'</div></div><div class="drop">'+(i>0&&drop>0?'▼'+drop+'명 이탈':'')+'</div></div>';
   });
   h+='</div>';
   // 리텐션
   const r=d.retention||{};
-  h+='<div class="panel"><h2>🔁 리텐션</h2><div class="rets">'
+  h+='<div class="panel"><h2>리텐션</h2><div class="rets">'
     +'<div class="ret"><b>'+r.dau+'</b><span>DAU (오늘 활성)</span></div>'
     +'<div class="ret"><b>'+r.wau+'</b><span>WAU (7일)</span></div>'
     +'<div class="ret"><b>'+r.mau+'</b><span>MAU (30일)</span></div>'
@@ -175,28 +175,28 @@ function analytics(d){
   // 시간대별 + 14일추이
   const hr=d.hourly||[],peak=hr.reduce((a,b)=>((b.posts+b.dms+b.swipes)>(a.posts+a.dms+a.swipes)?b:a),hr[0]||{});
   hr.forEach(x=>x.label=(x.hour%6===0||x.hour===23)?x.hour:'');
-  h+='<div class="panel"><h2>🕐 시간대별 활동 (KST)</h2>'
+  h+='<div class="panel"><h2>시간대별 활동 (KST)</h2>'
     +chartCard('게시물·DM·스와이프','피크 '+(peak?peak.hour+'시':'-'),bars(hr,['dms','posts','swipes'],['#2e8b57','#2f6feb','#b7791f'],[0,6,12,18,23]))
     +'<div class="muted" style="font-size:11px;margin-top:6px">🟩 DM · 🟦 게시물 · 🟧 스와이프</div></div>';
   const tl=d.timeline||[];tl.forEach(x=>x.label='');
-  h+='<div class="panel"><h2>📅 일자별 추이 (14일)</h2><div class="charts">'
+  h+='<div class="panel"><h2>일자별 추이 (14일)</h2><div class="charts">'
     +chartCard('📝 게시물','합 '+tl.reduce((a,x)=>a+x.posts,0),bars(tl,['posts'],['#2f6feb'],[0,13]))
     +chartCard('💬 DM','합 '+tl.reduce((a,x)=>a+x.dms,0),bars(tl,['dms'],['#2e8b57'],[0,13]))
     +chartCard('🤖 AI','합 '+tl.reduce((a,x)=>a+x.ai,0),bars(tl,['ai'],['#b7791f'],[0,13]))
     +'</div></div>';
   // 기능별 사용량
   const fu=d.featureUsage||[],fumax=Math.max(1,...fu.map(x=>x.count));
-  h+='<div class="panel"><h2>📊 기능별 사용량</h2>'+tbl('<th>기능</th><th class="n">횟수</th><th style="width:45%">비중</th>',
+  h+='<div class="panel"><h2>기능별 사용량</h2>'+tbl('<th>기능</th><th class="n">횟수</th><th style="width:45%">비중</th>',
     fu.map(x=>'<tr><td>'+esc(x.feature)+'</td><td class="n">'+N(x.count)+'</td><td><span class="ibar" style="width:'+(x.count/fumax*100)+'%"></span></td></tr>').join(''))+'</div>';
   // AI 비용(함수별)
   const ac=d.aiCost||[],tot=ac.reduce((a,x)=>({calls:a.calls+x.calls,in_tokens:a.in_tokens+x.in_tokens,out_tokens:a.out_tokens+x.out_tokens,cached_tokens:a.cached_tokens+x.cached_tokens,cost:a.cost+x.cost}),{calls:0,in_tokens:0,out_tokens:0,cached_tokens:0,cost:0});
-  h+='<div class="panel"><h2>💰 AI 비용 (함수별)</h2>'+tbl('<th>함수</th><th class="n">호출</th><th class="n">입력토큰</th><th class="n">출력토큰</th><th class="n">캐시</th><th class="n">비용</th>',
+  h+='<div class="panel"><h2>AI 비용 (함수별)</h2>'+tbl('<th>함수</th><th class="n">호출</th><th class="n">입력토큰</th><th class="n">출력토큰</th><th class="n">캐시</th><th class="n">비용</th>',
     ac.map(x=>'<tr><td>'+esc(x.fn)+'</td><td class="n">'+N(x.calls)+'</td><td class="n">'+N(x.in_tokens)+'</td><td class="n">'+N(x.out_tokens)+'</td><td class="n">'+N(x.cached_tokens)+'</td><td class="n">'+D(x.cost)+'</td></tr>').join('')
     +'<tr style="font-weight:700"><td>합계</td><td class="n">'+N(tot.calls)+'</td><td class="n">'+N(tot.in_tokens)+'</td><td class="n">'+N(tot.out_tokens)+'</td><td class="n">'+N(tot.cached_tokens)+'</td><td class="n">'+D(tot.cost)+'</td></tr>')+'</div>';
   // 이벤트 스트림
   const bc={post:'#2f6feb',comment:'#2e8b57',dm_user:'#6b7280',dm_persona:'#6b7280',match:'#7857c9'};
   const bl={post:'게시물',comment:'댓글',dm_user:'DM유저',dm_persona:'DM봇',match:'매칭'};
-  h+='<div class="panel"><h2>⚡ 이벤트 스트림</h2>'+(d.events||[]).map(e=>'<div class="ev"><span class="badge" style="background:'+(bc[e.type]||'#667085')+'">'+(bl[e.type]||e.type)+'</span><span class="who">'+esc(e.who)+'</span><span class="tx">'+esc(e.text)+'</span><span class="tm">'+rel(e.at)+'</span></div>').join('')+'</div>';
+  h+='<div class="panel"><h2>이벤트 스트림</h2>'+(d.events||[]).map(e=>'<div class="ev"><span class="badge" style="background:'+(bc[e.type]||'#667085')+'">'+(bl[e.type]||e.type)+'</span><span class="who">'+esc(e.who)+'</span><span class="tx">'+esc(e.text)+'</span><span class="tm">'+rel(e.at)+'</span></div>').join('')+'</div>';
   return h;
 }
 function postsTab(d){return(d.posts||[]).length?d.posts.map(p=>{const im=(p.media_urls||[]).map(simg).filter(Boolean);return'<div class="card"><div class="phead"><b>'+esc(p.author)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'+(im.length?'<div class="thumbs">'+im.map(u=>'<img class="thumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')+(p.content?'<div class="content">'+esc(p.content)+'</div>':'')+(p.media_type==='poll'?'<div class="muted">📊 투표</div>':'')+'</div>'}).join(''):'<p class="muted">게시물 없음</p>'}
@@ -258,13 +258,13 @@ function auditTab(){
     +kpi(N(s.removedTotal),'삭제된 게시물(누적)')
     +kpi(N(s.imgTotal),'제거된 사진(누적)')
     +'</div>';
-  h+='<div class="panel"><h2>🧹 이미지 검수</h2>'
+  h+='<div class="panel"><h2>이미지 검수</h2>'
     +'<p class="muted">AI 비전이 외국인 얼굴·기괴/왜곡·해외배경·캡션과 무관한 사진을 판정해 정리해요. 2시간마다 자동 실행되고, 아래 버튼으로 즉시 한 배치(12개)를 돌릴 수 있어요.</p>'
     +'<button style="width:auto;padding:10px 18px" onclick="loadAudit(true)"'+(AUDIT_BUSY||s.pending===0?' disabled':'')+'>'+(AUDIT_BUSY?'검수 중…':(s.pending===0?'검수할 게시물 없음':'지금 검수 실행 (12개)'))+'</button>'
     +(rr?'<p class="muted" style="margin-top:8px">방금 실행: 판정 '+N(rr.audited||0)+' · 게시물 삭제 '+N(rr.removedPosts||0)+' · 사진 제거 '+N(rr.cleanedImgs||0)+' · 통과 '+N(rr.kept||0)+(rr.remaining!=null?' · 남은 대기 '+N(rr.remaining):'')+'</p>':'')
     +'</div>';
   const log=AUDIT.log||[];
-  h+='<div class="panel"><h2>🗑 정리 내역 (최근 '+log.length+'건)</h2>'
+  h+='<div class="panel"><h2>정리 내역 (최근 '+log.length+'건)</h2>'
     +(log.length?log.map(x=>'<div class="ev" style="align-items:flex-start">'
       +(simg(x.image_url)?'<img class="thumb" src="'+simg(x.image_url)+'" loading="lazy" style="width:56px;height:56px;flex:0 0 auto">':'')
       +'<span class="badge" style="background:'+(x.action==='removed_post'?'#c0362c':'#b7791f')+'">'+(x.action==='removed_post'?'게시물삭제':'사진제거')+'</span>'
@@ -317,7 +317,7 @@ async function uploadLocal(){
 function uploadPanel(){
   const opts='<option value="">— 페르소나 선택 —</option>'+(PEND&&PEND.allPersonas?PEND.allPersonas:[]).map(p=>'<option value="'+esc(p.id)+'"'+(UP.persona===p.id?' selected':'')+'>'+esc(p.name)+' (@'+esc(p.handle||'')+')</option>').join('');
   // ★로컬 이미지 업로드는 현재 보류(게시물 이미지는 GPT 이미지로만 생성). 기능은 유지하되 접어둠.
-  return'<details class="panel"><summary style="cursor:pointer;font-weight:800;font-size:15px">🖼 로컬 이미지 업로드 <span class="muted" style="font-weight:400">(보류 · 펼치기)</span></summary>'
+  return'<details class="panel"><summary style="cursor:pointer;font-weight:800;font-size:15px">로컬 이미지 업로드 <span class="muted" style="font-weight:400">(보류 · 펼치기)</span></summary>'
     +'<p class="muted" style="margin-top:10px">현재 게시물 이미지는 GPT 이미지 생성으로만 만듭니다. 이 업로드 기능은 보류 상태로 남겨둔 것이며, 필요 시 여기서 직접 만든 이미지를 올릴 수 있어요. \'즉시 공개\'를 끄면 아래 배포 대기로 들어갑니다.</p>'
     +'<div style="display:flex;flex-direction:column;gap:8px;max-width:520px">'
     +'<select onchange="upField(\'persona\',this.value)" style="padding:9px;border:1px solid #d0d5dd;border-radius:8px;background:transparent;color:inherit">'+opts+'</select>'
@@ -334,16 +334,16 @@ function pendingTab(){
   if(!PEND&&!PEND_BUSY)loadPending();
   if(!PEND)return'<p class="muted">승인 대기 불러오는 중…</p>';
   if(PEND.error)return'<p class="err">불러오기 실패: '+esc(PEND.error)+'</p>';
-  let h='<div class="panel"><h2>🚀 배포 게이트 — 검증 후 배포</h2><p class="muted">GPT 이미지로 생성된 게시물·새 페르소나는 여기서 <b>검증하고 배포</b>해야 유저에게 노출돼요(통매음·음란물 방지). 이미지·내용을 직접 확인하고 배포/거부하세요.</p>'
+  let h='<div class="panel"><h2>배포 게이트 — 검증 후 배포</h2><p class="muted">GPT 이미지로 생성된 게시물·새 페르소나는 여기서 <b>검증하고 배포</b>해야 유저에게 노출돼요(통매음·음란물 방지). 이미지·내용을 직접 확인하고 배포/거부하세요.</p>'
     +'<div class="kpis"><div class="kpi"><b>'+N(PEND.pendingPersonas)+'</b><span>대기 페르소나</span></div><div class="kpi"><b>'+N(PEND.pendingPosts)+'</b><span>배포 대기 게시물</span></div></div></div>';
   // 대기 페르소나
   if((PEND.personas||[]).length){
-    h+='<div class="panel"><h2>👤 새 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
+    h+='<div class="panel"><h2>새 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
       +gal(av.image,av.photos)+(p.bio?'<div class="pbio">📝 '+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
       +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">🚀 배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">✕ 거부</button></div></div>'}).join('')+'</div>';
   }
   // 대기 게시물
-  h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">🖼 새 게시물 ('+(PEND.posts||[]).length+')</h2>'+((PEND.posts||[]).length?'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAll()">모두 배포</button>':'')+'</div>'
+  h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0">새 게시물 ('+(PEND.posts||[]).length+')</h2>'+((PEND.posts||[]).length?'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAll()">모두 배포</button>':'')+'</div>'
     +((PEND.posts||[]).length?PEND.posts.map(p=>{const im=pimgs(p).map(simg).filter(Boolean);return'<div class="dpost"><div class="phead"><b>'+esc(p.personas?p.personas.name:p.persona_id)+'</b><span class="t">'+rel(p.created_at)+' 전</span></div>'
       +(im.length?'<div class="dthumbs">'+im.map(u=>'<img class="dthumb" src="'+u+'" loading="lazy">').join('')+'</div>':'')
       +'<div class="dpc">'+esc(p.content||'(사진)')+'</div>'+(p.location?'<div class="dpmeta">📍'+esc(p.location)+'</div>':'')
@@ -362,7 +362,7 @@ function trainingTab(){
   if(!TRAIN)return'<p class="muted">학습 현황 불러오는 중…</p>';
   if(TRAIN.error)return'<p class="muted">오류: '+esc(TRAIN.error)+'</p>';
   const c=TRAIN.consent||{},p=TRAIN.pairs||{};
-  let h='<div class="panel"><h2>📥 무엇을 수집 중인가</h2>'
+  let h='<div class="panel"><h2>무엇을 수집 중인가</h2>'
     +'<div class="kpis">'+kpi(N(c.yes)+' / '+N(c.total),'학습 동의 유저')
     +kpi(N(p.total),'수집된 (게시물→댓글) 쌍')
     +kpi((p.bySource||[]).map(s=>esc(s.source)+' '+N(s.n)).join(' · ')||'—','소스별')+'</div>';
@@ -371,11 +371,11 @@ function trainingTab(){
      +p.daily.map(x=>'<div title="'+esc(x.d)+': '+x.n+'" style="flex:1;background:#2f6feb;border-radius:2px 2px 0 0;height:'+Math.round(+x.n/mx*100)+'%;min-height:2px"></div>').join('')+'</div>';}
   h+='<p class="muted" style="margin-top:10px">동의한 유저가 페르소나 게시물에 단 댓글만 비식별로 적재됩니다. 이 데이터로 대화 AI를 파인튜닝해 AI 티를 줄입니다.</p></div>';
   // 최근 수집 샘플
-  h+='<div class="panel"><h2>🧾 최근 수집 샘플 (게시물 맥락 → 실제 유저 댓글)</h2>';
+  h+='<div class="panel"><h2>최근 수집 샘플 (게시물 맥락 → 실제 유저 댓글)</h2>';
   h+=(TRAIN.samples||[]).length?TRAIN.samples.map(s=>'<div class="card"><div class="muted" style="font-size:12px">📄 '+esc(s.context||'(맥락 없음)')+'</div><div style="margin-top:4px">💬 <b>'+esc(s.response)+'</b></div><div class="t">'+rel(s.at)+' 전</div></div>').join(''):'<p class="muted">아직 수집된 댓글이 없어요. 유저가 [설정 > 데이터 활용]에서 동의하면 쌓이기 시작합니다.</p>';
   h+='</div>';
   // 학습 이력
-  h+='<div class="panel"><h2>🧪 어떻게 학습됐나 (파인튜닝 이력)</h2>';
+  h+='<div class="panel"><h2>어떻게 학습됐나 (파인튜닝 이력)</h2>';
   h+=(TRAIN.runs||[]).length?tbl('<th>일시</th><th>방식</th><th>베이스 모델</th><th class="n">예제수</th><th>loss</th><th>상태</th><th>결과</th>',
     TRAIN.runs.map(r=>{const st=r.status==='completed'?'✅완료':r.status==='blocked'?'⛔차단':r.status==='failed'?'❌실패':esc(r.status||'');
       const loss=(r.val_loss_start!=null&&r.val_loss_end!=null)?(r.val_loss_start+'→'+r.val_loss_end):'—';
