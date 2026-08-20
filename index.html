@@ -11,6 +11,8 @@ h1{font-size:18px;margin:0;font-weight:800}h2{font-size:15px;margin:18px 0 8px;f
 .wrap{max-width:1040px;margin:0 auto;padding:14px 18px 80px}
 .login{max-width:340px;margin:80px auto;text-align:center}
 input,button{font-size:15px;padding:12px 14px;border-radius:6px;border:1px solid #d0d5dd;width:100%;margin:6px 0}
+/* ★체크박스/라디오는 위 width:100%에서 제외 — 안 그러면 체크박스가 줄을 다 먹고 옆 글자가 세로로 눌린다 */
+input[type=checkbox],input[type=radio]{width:auto;flex:0 0 auto;margin:0;padding:0}
 button{background:#2f6feb;color:#ffffff;border:0;font-weight:600;cursor:pointer}
 .live{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;margin:2px 0 8px}
 .dot{width:8px;height:8px;border-radius:5px;background:#2e8b57;animation:p 2s infinite}@keyframes p{50%{opacity:.3}}
@@ -78,8 +80,8 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .tag2{font-size:11px;color:#4b5563;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
 @media(prefers-color-scheme:dark){.tag2{background:#1e222a;border-color:#2a2f37;color:#98a1b0}}
 /* ── 설정(게시물 스케줄) ── */
-.hgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:5px;margin:8px 0 4px}
-.hb{width:auto;margin:0;padding:8px 0;font-size:12px;font-weight:700;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer;font-variant-numeric:tabular-nums;position:relative}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(46px,1fr));gap:5px;margin:8px 0 4px}
+.hb{width:auto;min-width:0;margin:0;padding:7px 2px;font-size:12px;line-height:1.25;font-weight:700;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
 .hb.on{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
 .hb .n{display:block;font-size:9px;font-weight:600;opacity:.7}
 @media(prefers-color-scheme:dark){.hb{border-color:#2a2f37}}
@@ -89,9 +91,24 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 @media(prefers-color-scheme:dark){.db{border-color:#2a2f37}}
 .frow{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
 .frow label{font-size:13px;color:#667085;font-weight:600;min-width:120px}
+@media(max-width:600px){.frow{gap:6px}.frow label{min-width:0;flex:1 0 100%}.frow input[type=number]{width:96px}.hgrid{gap:4px}}
 .frow input[type=number]{width:80px;margin:0;padding:7px 9px;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;font-size:13px}
-.sw2{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.sw2{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;white-space:nowrap}
 .hint{font-size:12px;color:#667085;line-height:1.6}
+/* ★한글은 어느 글자에서나 줄바꿈된다 — 좁은 버튼/태그는 nowrap이 없으면 세로글씨가 된다 */
+.segb,.db,.hb,.stab,.rx,.addr,.isel button,.pager button,.tag2,.ibadge,.fcount,.segl{white-space:nowrap}
+.isel label{white-space:nowrap}
+/* ── 스케줄 규칙 카드 ── */
+.rule{border:1px solid #e5e7eb;border-radius:8px;padding:12px 13px;margin-bottom:10px;background:#fbfcfd}
+@media(prefers-color-scheme:dark){.rule{background:#141821;border-color:#2a2f37}}
+.rule.off{opacity:.55}
+.rhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rhead input[type=text]{flex:1 1 140px;min-width:120px;width:auto;margin:0;padding:6px 9px;font-size:13px;font-weight:700}
+.rsum{font-size:12px;color:#667085;flex:1 1 100%;font-variant-numeric:tabular-nums}
+.rx{width:auto;margin:0;padding:5px 10px;font-size:12px;font-weight:600;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:#c0362c;cursor:pointer}
+@media(prefers-color-scheme:dark){.rx{border-color:#2a2f37}}
+.rsegs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.addr{width:auto;margin:6px 0 0;padding:9px 14px;font-size:13px;font-weight:700;border:1px dashed #2f6feb;border-radius:7px;background:transparent;color:#2f6feb;cursor:pointer}
 /* ── 배포 탭 서브탭(페르소나/게시물) ── */
 .stabs{display:flex;gap:6px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:6px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
 @media(prefers-color-scheme:dark){.stabs{background:#171a1f;border-color:#2a2f37}}
@@ -102,14 +119,14 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .prog{height:6px;background:#eceff3;border-radius:3px;overflow:hidden;margin-top:10px}
 .progf{height:100%;background:#2f6feb}
 @media(prefers-color-scheme:dark){.prog{background:#2a2f37}}
-.ibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
-@media(prefers-color-scheme:dark){.ibar{background:#171a1f;border-color:#2a2f37}}
-.ibar .sel{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
-.ibar button{width:auto;margin:0;padding:5px 11px;font-size:12.5px;font-weight:600;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
-.ibar button.pri{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
-.ibar button.dng{color:#c0362c}
-.ibar button:disabled{opacity:.45;cursor:default}
-.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px}
+.isel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin-bottom:12px;position:sticky;top:41px;z-index:15}
+@media(prefers-color-scheme:dark){.isel{background:#171a1f;border-color:#2a2f37}}
+.isel .sel{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.isel button{width:auto;margin:0;padding:5px 11px;font-size:12.5px;font-weight:600;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.isel button.pri{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
+.isel button.dng{color:#c0362c}
+.isel button:disabled{opacity:.45;cursor:default}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .icard{position:relative;background:#ffffff;border:1px solid #e1e4e8;border-radius:9px;overflow:hidden}
 .icard.on{outline:2px solid #2f6feb;outline-offset:-2px}
 .iw{position:relative;aspect-ratio:1/1;background:#f2f4f7;cursor:zoom-in}
@@ -125,11 +142,12 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .ips img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px;background:#f2f4f7;cursor:zoom-in}
 .ips .ne{aspect-ratio:1/1;border-radius:3px;background:#f2f4f7;border:1px dashed #d0d5dd}
 @media(prefers-color-scheme:dark){.ips .ne{background:#1e222a;border-color:#2a2f37}}
-.ibtns{display:flex;gap:4px;padding:6px 8px 8px}
-.ibtns button{flex:1;width:auto;margin:0;padding:4px 0;font-size:11px;font-weight:600;border:1px solid #d0d5dd;border-radius:5px;background:transparent;color:inherit;cursor:pointer}
+.ibtns{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px 8px 8px}
+.ibtns button{width:auto;min-width:0;margin:0;padding:5px 2px;font-size:11px;font-weight:600;border:1px solid #d0d5dd;border-radius:5px;background:transparent;color:inherit;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibtns button.full{grid-column:1/-1}
 .ibtns button.ok{background:#2f6feb;color:#ffffff;border-color:#2f6feb}
 .ibtns button.no{color:#c0362c}
-@media(prefers-color-scheme:dark){.ibtns button,.ibar button{border-color:#2a2f37}}
+@media(prefers-color-scheme:dark){.ibtns button,.isel button{border-color:#2a2f37}}
 .pager{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 4px;font-size:12.5px;color:#667085}
 .pager button{width:auto;margin:0;padding:5px 12px;border:1px solid #d0d5dd;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px}
@@ -695,7 +713,7 @@ function imagesTab(){
     +iseg('배포',IMGF.approved,[{v:'all',l:'전체'},{v:'no',l:'대기'},{v:'yes',l:'배포됨'}],'approved')
     +'<span class="fcount">'+N(IMG.total||0)+'명 · '+((IMG.page||0)+1)+'페이지</span></div>';
   const allOn=(IMG.rows||[]).length>0&&(IMG.rows||[]).every(r=>IMG_SEL[r.id]);
-  h+='<div class="ibar"><label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(allOn?'checked':'')+' onchange="selAllImg(this.checked)"> 이 페이지 전체</label>'
+  h+='<div class="isel"><label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer"><input type="checkbox" '+(allOn?'checked':'')+' onchange="selAllImg(this.checked)"> 이 페이지 전체</label>'
     +'<span class="sel">선택 <span id="iseln">'+Object.keys(IMG_SEL).length+'</span>명</span>'
     +'<button class="pri" onclick="bulkImg(\'approve\')">일괄 배포</button>'
     +'<button class="dng" onclick="bulkImg(\'reject\')">일괄 거부</button>'
@@ -716,8 +734,8 @@ function imagesTab(){
       +'<div class="ib"><div class="inm">'+esc(p.name||'')+(p.by_user?' <span class="tag2">유저</span>':'')+'</div><div class="imeta">'+tags+'</div></div>'
       +'<div class="ips">'+strip+'</div>'
       +'<div class="ibtns">'+(p.approved
-        ?'<button class="no" onclick="approveImg(\''+p.id+'\',false)">거부</button>'
-        :'<button class="ok" onclick="approveImg(\''+p.id+'\',true)">배포</button>')
+        ?'<button class="no full" onclick="approveImg(\''+p.id+'\',false)">거부</button>'
+        :'<button class="ok full" onclick="approveImg(\''+p.id+'\',true)">배포</button>')
       +'<button onclick="regenOne(\''+p.id+'\',\'avatar\',0)">↻프로필</button>'
       +(img?'<button onclick="regenOne(\''+p.id+'\',\'photos\',0)">↻사진</button>':'')
       +'</div></div>';
@@ -729,10 +747,12 @@ function imagesTab(){
     +'<button onclick="imgPage('+((IMG.page||0)+1)+')"'+((IMG.page||0)>=pages-1?' disabled':'')+'>다음</button></div>';
   return h;
 }
-// ── 설정 탭: 페르소나 게시물 생성 스케줄 ──
-// 크론은 매시 정각에 깨고, 실제 생성 여부·개수는 여기 설정이 정한다(설정 안 맞으면 그 시각은 건너뜀).
+// ── 설정 탭: 페르소나 게시물 생성 스케줄(규칙 기반) ──
+// 크론은 매시 정각에 깨고, "누가(범주) / 언제(시각·요일) / 몇 개" 는 규칙들이 정한다.
+// 같은 시각에 여러 규칙이 걸리면 합쳐서 생성(중복 인물은 한 번만), 회당 총량은 12명 상한.
 let SET=null,SET_BUSY=false,SET_DRAFT=null,SET_MSG='';
 const DAYS=['일','월','화','수','목','금','토'];
+const GENRES2=['학원','판타지','액션','로맨스','일상','이세계'];
 async function loadSettings(){
   if(SET_BUSY)return;SET_BUSY=true;if(LAST)render(LAST);
   try{SET=await api({view:'settings'})}catch(e){SET={error:String(e)}}
@@ -740,59 +760,108 @@ async function loadSettings(){
 }
 function draft(){
   if(!SET_DRAFT){const p=(SET&&SET.settings&&SET.settings.persona_posts)||{};
-    SET_DRAFT={enabled:p.enabled!==false,hours:(p.hours||[8,12,15,18,21]).slice(),days:(p.days||[0,1,2,3,4,5,6]).slice(),
-      per_run:p.per_run||6,rich_per_run:p.rich_per_run==null?2:p.rich_per_run,
+    let rules=Array.isArray(p.rules)&&p.rules.length?JSON.parse(JSON.stringify(p.rules)):null;
+    if(!rules)rules=[{label:'전체',enabled:true,filter:{style:'all',gender:'all',nat:'all',genre:'all'},
+      hours:(p.hours||[8,12,15,18,21]).slice(),days:(p.days||[0,1,2,3,4,5,6]).slice(),per_run:p.per_run||6}];
+    rules.forEach(r=>{r.filter=r.filter||{};['style','gender','nat','genre'].forEach(k=>{r.filter[k]=r.filter[k]||'all'})});
+    SET_DRAFT={enabled:p.enabled!==false,rules:rules,rich_per_run:p.rich_per_run==null?2:p.rich_per_run,
       respect_chronotype:p.respect_chronotype!==false,approved_only:p.approved_only!==false};}
   return SET_DRAFT;
 }
-function togHour(h){const d=draft();const i=d.hours.indexOf(h);if(i<0)d.hours.push(h);else d.hours.splice(i,1);SET_MSG='';if(LAST)render(LAST)}
-function togDay(n){const d=draft();const i=d.days.indexOf(n);if(i<0)d.days.push(n);else d.days.splice(i,1);SET_MSG='';if(LAST)render(LAST)}
-function setField(k,v){const d=draft();d[k]=(k==='per_run'||k==='rich_per_run')?Number(v):v;SET_MSG='';if(k!=='per_run'&&k!=='rich_per_run'&&LAST)render(LAST)}
-function hoursPreset(kind){const d=draft();
-  d.hours=kind==='active'?[8,12,15,18,21]:kind==='wide'?[7,9,11,13,15,17,19,21,23]:kind==='all'?Array.from({length:24},(_,i)=>i):[12,20];
+function togHour(i,h){const r=draft().rules[i];const k=r.hours.indexOf(h);if(k<0)r.hours.push(h);else r.hours.splice(k,1);SET_MSG='';if(LAST)render(LAST)}
+function togDay(i,n){const r=draft().rules[i];const k=r.days.indexOf(n);if(k<0)r.days.push(n);else r.days.splice(k,1);SET_MSG='';if(LAST)render(LAST)}
+function setRule(i,k,v){const r=draft().rules[i];r[k]=(k==='per_run')?Number(v):v;SET_MSG='';if(k!=='per_run'&&k!=='label'&&LAST)render(LAST)}
+function setRuleF(i,k,v){draft().rules[i].filter[k]=v;SET_MSG='';if(LAST)render(LAST)}
+function hoursPreset(i,kind){const r=draft().rules[i];
+  r.hours=kind==='active'?[8,12,15,18,21]:kind==='wide'?[7,9,11,13,15,17,19,21,23]:kind==='all'?Array.from({length:24},(_,x)=>x):[12,20];
   SET_MSG='';if(LAST)render(LAST)}
+function addRule(){const d=draft();
+  d.rules.push({label:'새 규칙 '+(d.rules.length+1),enabled:true,filter:{style:'all',gender:'all',nat:'all',genre:'all'},hours:[12],days:[0,1,2,3,4,5,6],per_run:3});
+  SET_MSG='';if(LAST)render(LAST)}
+function delRule(i){const d=draft();if(d.rules.length<=1){alert('규칙은 최소 1개 필요해요.');return}
+  if(!confirm('"'+(d.rules[i].label||'')+'" 규칙을 삭제할까요?'))return;
+  d.rules.splice(i,1);SET_MSG='';if(LAST)render(LAST)}
+function setField(k,v){const d=draft();d[k]=(k==='rich_per_run')?Number(v):v;SET_MSG='';if(k!=='rich_per_run'&&LAST)render(LAST)}
+// 규칙 대상 인원 = 서버가 준 범주별 집계에서 가장 좁은 축으로 추정(정확 교집합은 아님 — 참고용)
+function ruleTargets(f){const b=(SET&&SET.buckets)||{};
+  if(f.style==='anime'){if(f.genre&&f.genre!=='all')return b['anime:genre:'+f.genre];
+    if(f.gender!=='all')return b['anime:'+f.gender];return b['anime']}
+  if(f.style==='real'){if(f.nat&&f.nat!=='all')return b['real:nat:'+f.nat];
+    if(f.gender!=='all')return b['real:'+f.gender];return b['real']}
+  return (SET&&SET.approvedPersonas)||0;
+}
+function ruleSummary(r){const f=r.filter||{};
+  const parts=[f.style==='anime'?'🎨 애니':f.style==='real'?'실사':'전체 인물'];
+  if(f.gender!=='all')parts.push(GEN_LABEL[f.gender]);
+  if(f.style==='anime'&&f.genre!=='all')parts.push(f.genre);
+  if(f.style!=='anime'&&f.nat!=='all')parts.push((NAT_LABEL[f.nat]||f.nat));
+  const hrs=r.hours.slice().sort((a,b)=>a-b);
+  const hs=hrs.length>6?hrs.length+'개 시각':hrs.map(h=>h+'시').join('·')||'없음';
+  const ds=r.days.length===7?'매일':r.days.slice().sort((a,b)=>a-b).map(d=>DAYS[d]).join('');
+  const t=ruleTargets(f);
+  return parts.join(' · ')+' — '+hs+' / '+ds+' / 회당 '+r.per_run+'개'+(t!=null?' · 대상 '+t+'명':'');
+}
 async function saveSettings(){
   const d=draft();
-  if(!d.hours.length||!d.days.length){alert('시각과 요일을 최소 1개씩 선택하세요.');return}
+  for(const r of d.rules){if(!r.hours.length||!r.days.length){alert('"'+(r.label||'')+'" 규칙에 시각과 요일을 최소 1개씩 선택하세요.');return}}
   try{await api({action:'save_settings',key:'persona_posts',value:d})}catch(e){alert('저장 실패: '+e);return}
-  SET_MSG='저장했어요. 다음 정각부터 이 스케줄로 돌아갑니다.';
+  SET_MSG='저장했어요. 다음 정각부터 이 규칙대로 돌아갑니다.';
   await loadSettings();
 }
 async function runPostsNow(){
   const n=Number(prompt('지금 몇 개 생성할까요? (1~12)','3')||0);
   if(!n)return;
   SET_MSG='생성 중…';if(LAST)render(LAST);
-  try{const r=await api({action:'run_posts_now',count:n});SET_MSG='생성 요청 완료: '+JSON.stringify(r.result||{}).slice(0,120)}
+  try{const r=await api({action:'run_posts_now',count:n});SET_MSG='생성 요청 완료: '+JSON.stringify(r.result||{}).slice(0,140)}
   catch(e){SET_MSG='실패: '+e}
   await loadSettings();
 }
+function ruleCard(r,i){
+  const f=r.filter||{},by=SET.byHour||[];
+  let h='<div class="rule'+(r.enabled===false?' off':'')+'">'
+    +'<div class="rhead"><input type="text" value="'+esc(r.label||'')+'" onchange="setRule('+i+',\'label\',this.value)">'
+    +'<label class="sw2"><input type="checkbox" '+(r.enabled!==false?'checked':'')+' onchange="setRule('+i+',\'enabled\',this.checked)"> 사용</label>'
+    +'<button class="rx" onclick="delRule('+i+')">삭제</button>'
+    +'<div class="rsum">'+esc(ruleSummary(r))+'</div></div>';
+  h+='<div class="rsegs">'
+    +iseg2('유형',f.style,[{v:'all',l:'전체'},{v:'real',l:'실사'},{v:'anime',l:'🎨 애니'}],i,'style')
+    +iseg2('성별',f.gender,[{v:'all',l:'전체'},{v:'female',l:'여성'},{v:'male',l:'남성'}],i,'gender')
+    +(f.style==='anime'
+      ?iseg2('장르',f.genre,[{v:'all',l:'전체'}].concat(GENRES2.map(g=>({v:g,l:g}))),i,'genre')
+      :iseg2('국적',f.nat,[{v:'all',l:'전체'},{v:'korean',l:'🇰🇷'},{v:'japanese',l:'🇯🇵'},{v:'chinese',l:'🇨🇳'},{v:'western',l:'🇺🇸'}],i,'nat'))
+    +'</div>';
+  h+='<div class="frow" style="gap:6px"><label style="min-width:0;flex:0 0 auto">시각 프리셋</label>'
+    +'<button class="segb" onclick="hoursPreset('+i+',\'active\')">활동시간</button>'
+    +'<button class="segb" onclick="hoursPreset('+i+',\'wide\')">2시간 간격</button>'
+    +'<button class="segb" onclick="hoursPreset('+i+',\'sparse\')">하루 2회</button>'
+    +'<button class="segb" onclick="hoursPreset('+i+',\'all\')">매시간</button></div>'
+    +'<div class="hgrid">'+Array.from({length:24},(_,x)=>'<button class="hb'+(r.hours.indexOf(x)>=0?' on':'')+'" onclick="togHour('+i+','+x+')">'+x+'시<span class="n">'+(by[x]||0)+'</span></button>').join('')+'</div>'
+    +'<div class="dgrid">'+DAYS.map((n,x)=>'<button class="db'+(r.days.indexOf(x)>=0?' on':'')+'" onclick="togDay('+i+','+x+')">'+n+'</button>').join('')+'</div>'
+    +'<div class="frow"><label>회당 생성 개수</label><input type="number" min="1" max="12" value="'+r.per_run+'" onchange="setRule('+i+',\'per_run\',this.value)"><span class="muted">1~12</span></div>';
+  return h+'</div>';
+}
+function iseg2(label,cur,opts,i,key){return'<div class="seg"><span class="segl">'+label+'</span>'+opts.map(o=>'<button class="segb'+(cur===o.v?' on':'')+'" onclick="setRuleF('+i+',\''+key+'\',\''+o.v+'\')">'+esc(o.l)+'</button>').join('')+'</div>'}
 function settingsTab(){
   if(!SET&&!SET_BUSY)loadSettings();
   if(!SET)return'<p class="muted">설정 불러오는 중…</p>';
   if(SET.error)return'<p class="err">불러오기 실패: '+esc(SET.error)+'</p>';
-  const d=draft(),by=SET.byHour||[],mx=Math.max(1,...by);
+  const d=draft();
   const upd=(SET.settings&&SET.settings.persona_posts&&SET.settings.persona_posts.updated_at)||null;
+  const perDay=d.rules.filter(r=>r.enabled!==false).reduce((a,r)=>a+r.hours.length*r.per_run,0);
   let h='<div class="panel"><h2>게시물 생성 스케줄</h2>'
-    +'<p class="hint">크론이 <b>매시 정각</b>에 확인해서, 아래에서 <b>켠 시각</b>에만 게시물을 만듭니다. 켜진 시각이 없으면 아무것도 만들지 않아요. 하루 생성량 ≈ 켠 시각 수 × 회당 개수.</p>'
-    +'<div class="kpis" style="margin-top:10px">'+kpi(N(d.hours.length*d.per_run),'하루 예상 생성','시각 '+d.hours.length+'개 × '+d.per_run)
+    +'<p class="hint">크론이 <b>매시 정각</b>에 확인해서, 그 시각에 걸린 규칙만 실행합니다. 규칙은 <b>대상 범주(실사/애니·성별·국적·장르) + 시각 + 요일 + 회당 개수</b>로 정합니다. 같은 시각에 여러 규칙이 걸리면 합쳐서 만들고(중복 인물 제외), <b>회당 총 12명</b>이 상한이에요.</p>'
+    +'<div class="kpis" style="margin-top:10px">'+kpi(N(perDay),'하루 예상 생성','규칙 '+d.rules.length+'개')
     +kpi(N(SET.recentTotal||0),'최근 7일 생성')+kpi(N(SET.pendingPosts||0),'배포 대기 게시물')+kpi(N(SET.approvedPersonas||0),'배포된 페르소나')+'</div>'
     +(upd?'<p class="muted" style="margin-top:8px">마지막 저장 '+rel(upd)+' 전</p>':'')+'</div>';
-  h+='<div class="panel"><h2>생성 시각 (KST)</h2>'
-    +'<div class="frow" style="gap:6px"><label style="min-width:0">빠른 설정</label>'
-    +'<button class="segb" onclick="hoursPreset(\'active\')">활동시간 5회</button>'
-    +'<button class="segb" onclick="hoursPreset(\'wide\')">2시간 간격</button>'
-    +'<button class="segb" onclick="hoursPreset(\'sparse\')">하루 2회</button>'
-    +'<button class="segb" onclick="hoursPreset(\'all\')">매시간</button></div>'
-    +'<div class="hgrid">'+Array.from({length:24},(_,i)=>'<button class="hb'+(d.hours.indexOf(i)>=0?' on':'')+'" onclick="togHour('+i+')">'+i+'시<span class="n">'+(by[i]||0)+'</span></button>').join('')+'</div>'
-    +'<p class="hint">숫자 아래 작은 값은 <b>최근 7일 그 시각에 실제로 만들어진 게시물 수</b>예요(설정이 먹고 있는지 확인용).</p>'
-    +'<h2 style="margin-top:16px">요일</h2><div class="dgrid">'+DAYS.map((n,i)=>'<button class="db'+(d.days.indexOf(i)>=0?' on':'')+'" onclick="togDay('+i+')">'+n+'</button>').join('')+'</div>'
-    +'</div>';
-  h+='<div class="panel"><h2>생성량·조건</h2>'
-    +'<div class="frow"><label>회당 생성 개수</label><input type="number" min="1" max="12" value="'+d.per_run+'" onchange="setField(\'per_run\',this.value)"><span class="muted">1~12</span></div>'
+  h+='<div class="panel"><h2>규칙 ('+d.rules.length+')</h2>'
+    +'<p class="hint">예) “애니 남성 — 21·23시 / 금·토”, “실사 🇰🇷 여성 — 8·12·18시 / 매일”. 시각 버튼 아래 숫자는 최근 7일 그 시각에 실제로 만들어진 게시물 수입니다.</p>'
+    +d.rules.map(ruleCard).join('')
+    +'<button class="addr" onclick="addRule()">+ 규칙 추가</button></div>';
+  h+='<div class="panel"><h2>공통 설정</h2>'
     +'<div class="frow"><label>회당 포토덤프</label><input type="number" min="0" max="4" value="'+d.rich_per_run+'" onchange="setField(\'rich_per_run\',this.value)"><span class="muted">여러 장 사진 묶음 개수(0~4)</span></div>'
-    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.enabled?'checked':'')+' onchange="setField(\'enabled\',this.checked)"> 자동 생성 켜기</span></label></div>'
-    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.respect_chronotype?'checked':'')+' onchange="setField(\'respect_chronotype\',this.checked)"> 자는 페르소나 제외(크로노타입)</span></label></div>'
-    +'<div class="frow"><label style="min-width:0"><span class="sw2"><input type="checkbox" '+(d.approved_only?'checked':'')+' onchange="setField(\'approved_only\',this.checked)"> 배포된 페르소나만 생성</span></label></div>'
+    +'<div class="frow"><label class="sw2"><input type="checkbox" '+(d.enabled?'checked':'')+' onchange="setField(\'enabled\',this.checked)"> 자동 생성 켜기</label></div>'
+    +'<div class="frow"><label class="sw2"><input type="checkbox" '+(d.respect_chronotype?'checked':'')+' onchange="setField(\'respect_chronotype\',this.checked)"> 자는 페르소나 제외(크로노타입)</label></div>'
+    +'<div class="frow"><label class="sw2"><input type="checkbox" '+(d.approved_only?'checked':'')+' onchange="setField(\'approved_only\',this.checked)"> 배포된 페르소나만 생성</label></div>'
     +'<p class="hint">배포 안 된 인물의 글은 유저에게 안 보이는데 생성 비용은 그대로 나갑니다 — 특별한 이유가 없으면 켜두세요.</p>'
     +'<div class="row"><button class="okbtn" onclick="saveSettings()">저장</button><button class="nobtn" onclick="runPostsNow()">지금 생성</button></div>'
     +(SET_MSG?'<p class="muted" style="margin-top:8px">'+esc(SET_MSG)+'</p>':'')
