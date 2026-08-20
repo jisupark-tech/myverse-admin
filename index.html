@@ -209,17 +209,37 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 </div></div>
 <script>
 const URL_="https://mqzbgtndjpaxjootlgqi.supabase.co",ANON="sb_publishable_MPpJx2zEN_W_ETaE3AmXfw_VGtY6D_n";
-let TOKEN=sessionStorage.getItem('mv_at')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false;
+let TOKEN=sessionStorage.getItem('mv_at')||'',RTOKEN=sessionStorage.getItem('mv_rt')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
   const r=await fetch(URL_+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
   const j=await r.json();
   if(!j.access_token){document.getElementById('err').textContent='로그인 실패: '+(j.error_description||j.msg||'확인');return}
-  TOKEN=j.access_token;sessionStorage.setItem('mv_at',TOKEN);start();
+  TOKEN=j.access_token;sessionStorage.setItem('mv_at',TOKEN);
+  RTOKEN=j.refresh_token||'';if(RTOKEN)sessionStorage.setItem('mv_rt',RTOKEN);
+  start();
 }
-async function api(body){
+// 액세스 토큰은 1시간이면 만료된다 — 만료 후 그냥 두면 배포/저장 같은 동작이 전부 'unauth'로 실패한다.
+// 401을 만나면 리프레시 토큰으로 한 번 갱신하고 같은 요청을 재시도, 그것도 실패하면 로그인 화면으로.
+async function refreshToken(){
+  if(!RTOKEN)return false;
+  try{
+    const r=await fetch(URL_+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:RTOKEN})});
+    const j=await r.json();
+    if(!j.access_token)return false;
+    TOKEN=j.access_token;sessionStorage.setItem('mv_at',TOKEN);
+    if(j.refresh_token){RTOKEN=j.refresh_token;sessionStorage.setItem('mv_rt',RTOKEN)}
+    return true;
+  }catch(e){return false}
+}
+function relogin(){sessionStorage.removeItem('mv_at');sessionStorage.removeItem('mv_rt');location.reload()}
+async function api(body,retried){
   const r=await fetch(URL_+'/functions/v1/admin-activity',{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(r.status===401&&!retried){
+    if(await refreshToken())return api(body,true);
+    relogin();throw'unauth';
+  }
   if(r.status===403)throw'forbidden';if(r.status===401)throw'unauth';return r.json();
 }
 function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -416,13 +436,13 @@ async function loadPending(){
 }
 async function approve(kind,id,ok){
   const action=(kind==='post'?(ok?'approve_post':'reject_post'):(ok?'approve_persona':'reject_persona'));
-  try{await api({action,id})}catch(e){alert('실패: '+e)}
+  try{await api({action,id})}catch(e){if(e==='unauth')return;alert('실패: '+e)}
   await loadPending();
 }
 async function approveAll(){
   if(!PEND||!(PEND.posts||[]).length)return;
   if(!confirm('대기 게시물 '+PEND.posts.length+'개를 모두 배포할까요?'))return;
-  try{await api({action:'approve_post',ids:PEND.posts.map(p=>p.id)})}catch(e){alert('실패: '+e)}
+  try{await api({action:'approve_post',ids:PEND.posts.map(p=>p.id)})}catch(e){if(e==='unauth')return;alert('실패: '+e)}
   await loadPending();
 }
 // ── 로컬 제작 이미지 업로드(비용 절감: API 생성 대신 직접 만든 이미지를 페르소나 게시물로) ──
@@ -665,7 +685,7 @@ function lb(id,slot){
 }
 function closeLb(){modalOpen=false;const e=document.getElementById('lb');if(e)e.remove()}
 async function approveImg(id,ok){
-  try{await api({action:ok?'approve_persona':'reject_persona',id})}catch(e){alert('실패: '+e);return}
+  try{await api({action:ok?'approve_persona':'reject_persona',id})}catch(e){if(e!=='unauth')alert('실패: '+e);return}
   IMG_MSG=(ok?'배포':'거부')+' 처리했어요.';
   await loadImages(true);
 }
@@ -878,7 +898,7 @@ function render(d){
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
-  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'){try{LAST=await api({})}catch(_){/*무시*/}return;}
+  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'){try{LAST=await api({})}catch(e){if(e==='unauth')relogin()}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
 if(TOKEN)start();
