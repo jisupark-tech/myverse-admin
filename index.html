@@ -386,10 +386,18 @@ function pendingTab(){
   if(!PEND)return'<p class="muted">승인 대기 불러오는 중…</p>';
   if(PEND.error)return'<p class="err">불러오기 실패: '+esc(PEND.error)+'</p>';
   let h='<div class="panel"><h2>배포 게이트 — 검증 후 배포</h2><p class="muted">GPT 이미지로 생성된 게시물·새 페르소나는 여기서 <b>검증하고 배포</b>해야 유저에게 노출돼요(통매음·음란물 방지). 이미지·내용을 직접 확인하고 배포/거부하세요.</p>'
-    +'<div class="kpis"><div class="kpi"><b>'+N(PEND.pendingPersonas)+'</b><span>대기 페르소나</span></div><div class="kpi"><b>'+N(PEND.pendingPosts)+'</b><span>배포 대기 게시물</span></div></div></div>';
-  // 대기 페르소나
+    +'<div class="kpis"><div class="kpi"><b>'+N(PEND.pendingUserPersonas||0)+'</b><span>유저 제작 대기</span></div><div class="kpi"><b>'+N(PEND.pendingPersonas)+'</b><span>전체 대기 페르소나</span></div><div class="kpi"><b>'+N(PEND.pendingPosts)+'</b><span>배포 대기 게시물</span></div></div></div>';
+  // ★유저 제작 페르소나(우선 검토) — 다른 유저가 만든 AI가 검수 대기로 넘어온 것. 작성자 표시.
+  if((PEND.userPersonas||[]).length){
+    h+='<div class="panel"><h2>유저 제작 페르소나 ('+(PEND.userPersonas.length)+') <span class="tag2">검수 우선</span></h2><p class="muted">다른 유저가 만든 AI예요. 문제 없으면 배포하세요.</p>'+PEND.userPersonas.map(p=>{const av=p.avatar||{};const ds=(p.dm_style&&p.dm_style.samples)||[];return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">만든 사람: '+esc(p.creator_nickname||(p.created_by?p.created_by.slice(0,8)+'…':'?'))+'</span></div>'
+      +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')
+      +((p.personality_keywords||[]).length?'<div class="pmeta">'+p.personality_keywords.map(k=>'<span class="tag2">'+esc(k)+'</span>').join('')+'</div>':'')
+      +(ds.length?'<div class="pfacts"><b>말투</b>'+esc(ds.slice(0,3).join(' / '))+'</div>':'')
+      +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">거부</button></div></div>'}).join('')+'</div>';
+  }
+  // 시스템 생성 대기 페르소나(양산분)
   if((PEND.personas||[]).length){
-    h+='<div class="panel"><h2>새 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
+    h+='<div class="panel"><h2>시스템 생성 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
       +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
       +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">거부</button></div></div>'}).join('')+'</div>';
   }
