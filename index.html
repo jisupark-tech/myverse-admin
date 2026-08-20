@@ -227,28 +227,32 @@ function usersTab(d){return'<div class="panel">'+tbl('<th>닉네임</th><th>이�
   (d.users||[]).map(u=>'<tr class="clk" onclick="drill(\'user\',\''+u.id+'\')"><td>'+esc(u.nickname||'-')+'</td><td class="muted">'+esc(u.email||'-')+'</td><td class="n">'+u.posts+'</td><td class="n">'+u.dms+'</td><td class="n">'+u.ai_today+'</td><td class="n">'+u.followers+'</td><td>'+rel(u.last_active)+'</td></tr>').join(''))+'<p class="muted" style="margin:8px 2px 0">행을 누르면 상세 →</p></div>'}
 function gal(image,photos){const g=[image,...(photos||[])].map(simg).filter((u,i,a)=>u&&a.indexOf(u)===i);return g.length?'<div class="pgal">'+g.map((u,i)=>'<img class="pimg" src="'+u+'" loading="lazy" title="'+(i===0?'프로필':'사진'+i)+'">').join('')+'</div>':'<div class="muted">이미지 없음</div>'}
 // 페르소나 필터 상태(성별·국적·정렬)
-let PF={gender:'all',nat:'all',sort:'rating'};
+let PF={gender:'all',nat:'all',sort:'rating',type:'all'};
 const NAT_LABEL={korean:'🇰🇷 한국',japanese:'🇯🇵 일본',chinese:'🇨🇳 중국',western:'🇺🇸 서구',all:'전체'};
 const GEN_LABEL={female:'여성',male:'남성',all:'전체'};
 function setPF(k,v){PF[k]=v;if(LAST)render(LAST)}
 function seg(label,cur,opts,key){return'<div class="seg"><span class="segl">'+label+'</span>'+opts.map(o=>'<button class="segb'+(cur===o.v?' on':'')+'" onclick="setPF(\''+key+'\',\''+o.v+'\')">'+esc(o.l)+'</button>').join('')+'</div>'}
 function personasTab(d){
   let list=(d.personas||[]).slice();
+  if(PF.type==='anime')list=list.filter(p=>p.style==='anime');
+  else if(PF.type==='real')list=list.filter(p=>p.style!=='anime');
   if(PF.gender!=='all')list=list.filter(p=>(p.gender||'')===PF.gender);
-  if(PF.nat!=='all')list=list.filter(p=>(p.nationality||'')===PF.nat);
+  if(PF.type!=='anime'&&PF.nat!=='all')list=list.filter(p=>(p.nationality||'')===PF.nat);
   if(PF.sort==='rating')list.sort((a,b)=>(b.rating||0)-(a.rating||0));
   else if(PF.sort==='users')list.sort((a,b)=>(b.rel_users||0)-(a.rel_users||0));
   else if(PF.sort==='posts')list.sort((a,b)=>(b.post_count||0)-(a.post_count||0));
   else list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const bar='<div class="fbar">'
+    +seg('유형',PF.type,[{v:'all',l:'전체'},{v:'real',l:'실사'},{v:'anime',l:'🎨 애니'}],'type')
     +seg('성별',PF.gender,[{v:'all',l:'전체'},{v:'female',l:'여성'},{v:'male',l:'남성'}],'gender')
-    +seg('국적',PF.nat,[{v:'all',l:'전체'},{v:'korean',l:'🇰🇷 한국'},{v:'japanese',l:'🇯🇵 일본'},{v:'chinese',l:'🇨🇳 중국'},{v:'western',l:'🇺🇸 서구'}],'nat')
+    +(PF.type!=='anime'?seg('국적',PF.nat,[{v:'all',l:'전체'},{v:'korean',l:'🇰🇷 한국'},{v:'japanese',l:'🇯🇵 일본'},{v:'chinese',l:'🇨🇳 중국'},{v:'western',l:'🇺🇸 서구'}],'nat'):'')
     +seg('정렬',PF.sort,[{v:'rating',l:'평점순'},{v:'users',l:'인기순'},{v:'posts',l:'게시물순'},{v:'name',l:'이름순'}],'sort')
     +'<span class="fcount">'+list.length+'명</span></div>';
   const cards=list.map(p=>{const posts=(p.recent_posts||[]).filter(x=>x.image_url||x.content);
   const meta='<div class="pmeta">'
+    +(p.style==='anime'?'<span class="tag2">🎨 애니'+(p.genre?' · '+esc(p.genre):'')+'</span>':'')
     +(p.gender?'<span class="tag2">'+GEN_LABEL[p.gender]+'</span>':'')
-    +(p.nationality?'<span class="tag2">'+(NAT_LABEL[p.nationality]||p.nationality)+'</span>':'')
+    +(p.style!=='anime'&&p.nationality?'<span class="tag2">'+(NAT_LABEL[p.nationality]||p.nationality)+'</span>':'')
     +'<span class="tag2">관계 '+(p.rel_users||0)+'</span>'
     +'<span class="tag2">호감 '+(p.avg_score||0)+'</span>'
     +'<span class="tag2">평점 '+(p.rating||0)+'</span></div>';
