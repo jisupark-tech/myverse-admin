@@ -698,6 +698,26 @@ async function regenOne(id,kind,slot,fromLb){
   IMG_MSG='재생성 큐에 넣었어요. 워커가 처리하면 이미지가 바뀝니다.';
   await loadImages(true);
 }
+// 지금 필터에 걸린 '전체'를 한 번에 배포/거부 — 화면의 60명이 아니라 조건 전체(최대 2000명).
+async function bulkByFilter(approved){
+  const total = (IMG && IMG.total) || 0;
+  if(!total){ alert('조건에 맞는 인물이 없어요.'); return; }
+  const what = approved ? '배포' : '배포 취소';
+  const cond = [];
+  if(IMGF.style!=='all') cond.push(IMGF.style==='anime'?'애니':'실사');
+  if(IMGF.gender!=='all') cond.push(GEN_LABEL[IMGF.gender]);
+  if(IMGF.style==='anime'&&IMGF.genre!=='all') cond.push(IMGF.genre);
+  if(IMGF.style!=='anime'&&IMGF.nat!=='all') cond.push(NAT_LABEL[IMGF.nat]||IMGF.nat);
+  if(IMGF.approved!=='all') cond.push(IMGF.approved==='yes'?'배포됨':'배포 대기');
+  const desc = cond.length ? cond.join(' · ') : '전체';
+  if(!confirm('['+desc+'] 조건에 맞는 '+N(total)+'명을 '+what+'할까요?\n\n'+(approved?'이미지가 없는 인물은 자동으로 제외됩니다.':'')+'\n되돌리려면 반대 버튼으로 다시 처리하면 됩니다.'))return;
+  IMG_MSG='처리 중…'; if(LAST)render(LAST);
+  try{
+    const r = await api({action:'approve_personas_by_filter', filters:IMGF, approved});
+    IMG_MSG = (r.updated||0)+'명 '+what+' 완료'+(r.note?(' · '+r.note):'');
+  }catch(e){ if(e!=='unauth') alert('실패: '+e); IMG_MSG=''; }
+  IMG_SEL={}; await loadImages();
+}
 async function bulkImg(action){
   const ids=Object.keys(IMG_SEL);
   if(!ids.length){alert('선택된 페르소나가 없어요.');return}
@@ -739,6 +759,8 @@ function imagesTab(){
     +'<button class="dng" onclick="bulkImg(\'reject\')">일괄 거부</button>'
     +'<button onclick="bulkImg(\'avatar\')">프로필 재생성</button>'
     +'<button onclick="bulkImg(\'photos\')">사진 재생성</button>'
+    +'<button class="pri" onclick="bulkByFilter(true)">조건 전체 배포 ('+N(IMG.total||0)+')</button>'
+    +'<button class="dng" onclick="bulkByFilter(false)">조건 전체 배포취소</button>'
     +'<button onclick="loadImages(true)">새로고침</button>'
     +(IMG_MSG?'<span class="muted" style="font-size:12px">'+esc(IMG_MSG)+'</span>':'')+'</div>';
   const cards=(IMG.rows||[]).map(p=>{
