@@ -487,6 +487,19 @@ function uploadPanel(){
 // 배포 탭 서브탭: 페르소나 / 게시물 (한 화면에 다 쌓으면 게시물 보려고 한참 스크롤해야 함)
 let PSUB='persona';
 function setPSub(v){PSUB=v;if(LAST)render(LAST);window.scrollTo(0,0)}
+// 배포 탭: 대기 중인 페르소나를 조건 걸어 한 번에 배포. 목록에 보이는 40명이 아니라 '대기 전체'가 대상.
+async function approveAllPendingPersonas(creator){
+  const total = creator==='user' ? (PEND.pendingUserPersonas||0)
+                                 : Math.max(0,(PEND.pendingPersonas||0)-(PEND.pendingUserPersonas||0));
+  if(!total){ alert('배포 대기 중인 인물이 없어요.'); return; }
+  const who = creator==='user' ? '유저 제작' : '시스템 생성';
+  if(!confirm(who+' 대기 인물 '+N(total)+'명을 모두 배포할까요?\n\n이미지가 없는 인물은 자동으로 제외됩니다.\n되돌리려면 이미지 탭에서 조건을 걸어 배포취소할 수 있어요.'))return;
+  try{
+    const r = await api({action:'approve_personas_by_filter', filters:{approved:'no', has:'yes', creator:creator}, approved:true});
+    alert((r.updated||0)+'명 배포 완료'+(r.note?(' · '+r.note):''));
+  }catch(e){ if(e!=='unauth') alert('실패: '+e); }
+  await loadPending();
+}
 function pendingTab(){
   if(!PEND&&!PEND_BUSY)loadPending();
   if(!PEND)return'<p class="muted">승인 대기 불러오는 중…</p>';
@@ -499,7 +512,9 @@ function pendingTab(){
   if(PSUB==='persona'){
   // ★유저 제작 페르소나(우선 검토) — 다른 유저가 만든 AI가 검수 대기로 넘어온 것. 작성자 표시.
   if((PEND.userPersonas||[]).length){
-    h+='<div class="panel"><h2>유저 제작 페르소나 ('+(PEND.userPersonas.length)+') <span class="tag2">검수 우선</span></h2><p class="muted">다른 유저가 만든 AI예요. 문제 없으면 배포하세요.</p>'+PEND.userPersonas.map(p=>{const av=p.avatar||{};const ds=(p.dm_style&&p.dm_style.samples)||[];return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">만든 사람: '+esc(p.creator_nickname||(p.created_by?p.created_by.slice(0,8)+'…':'?'))+'</span></div>'
+    h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">유저 제작 페르소나 ('+(PEND.userPersonas.length)+') <span class="tag2">검수 우선</span></h2>'
+      +'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAllPendingPersonas(\'user\')">대기 전체 배포 ('+N(PEND.pendingUserPersonas||0)+')</button></div>'
+      +'<p class="muted">다른 유저가 만든 AI예요. 문제 없으면 배포하세요.</p>'+PEND.userPersonas.map(p=>{const av=p.avatar||{};const ds=(p.dm_style&&p.dm_style.samples)||[];return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span><span class="t">만든 사람: '+esc(p.creator_nickname||(p.created_by?p.created_by.slice(0,8)+'…':'?'))+'</span></div>'
       +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')
       +((p.personality_keywords||[]).length?'<div class="pmeta">'+p.personality_keywords.map(k=>'<span class="tag2">'+esc(k)+'</span>').join('')+'</div>':'')
       +(ds.length?'<div class="pfacts"><b>말투</b>'+esc(ds.slice(0,3).join(' / '))+'</div>':'')
@@ -507,7 +522,9 @@ function pendingTab(){
   }
   // 시스템 생성 대기 페르소나(양산분)
   if((PEND.personas||[]).length){
-    h+='<div class="panel"><h2>시스템 생성 페르소나 ('+PEND.personas.length+')</h2>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
+    h+='<div class="panel"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">시스템 생성 페르소나 ('+PEND.personas.length+' / 대기 '+N(Math.max(0,(PEND.pendingPersonas||0)-(PEND.pendingUserPersonas||0)))+')</h2>'
+      +'<button class="okbtn" style="width:auto;margin-left:auto" onclick="approveAllPendingPersonas(\'system\')">대기 전체 배포</button></div>'
+      +'<p class="muted">아래는 대기 인물 중 일부(최대 40명)예요. 조건을 걸어 고르려면 <b>이미지 탭</b>에서 필터 후 일괄 배포하세요.</p>'+PEND.personas.map(p=>{const av=p.avatar||{};return'<div class="card"><div class="phead"><b>'+esc(p.name)+'</b> <span class="muted">@'+esc(p.handle||'')+'</span></div>'
       +gal(av.image,av.photos)+(p.bio?'<div class="pbio">'+esc(p.bio)+'</div>':'')+(p.facts?'<div class="pfacts"><b>설정</b>'+esc(p.facts)+'</div>':'')
       +'<div class="row"><button class="okbtn" onclick="approve(\'persona\',\''+p.id+'\',true)">배포</button><button class="nobtn" onclick="approve(\'persona\',\''+p.id+'\',false)">거부</button></div></div>'}).join('')+'</div>';
   }
