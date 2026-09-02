@@ -199,6 +199,21 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 .cols{font-size:12px;color:#4b5563;background:#f2f4f7;border-radius:8px;padding:8px 10px;line-height:1.7;margin-bottom:8px}
 @media(prefers-color-scheme:dark){.cols{background:#1e222a;color:#98a1b0}}
 .cols .c{display:inline-block;margin-right:8px}.cols .c b{color:#2f6feb}.cols .c em{color:#667085;font-style:normal;font-size:11px}
+
+/* ── 대시보드 ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kcard{background:#ffffff;border:1px solid #e1e4e8;border-radius:10px;padding:12px 14px}
+.kv{font-size:24px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.kl{font-size:12px;color:#667085;margin-top:2px}
+.ks{font-size:11.5px;color:#12805c;font-weight:600}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.cgrid{grid-template-columns:1fr}}
+.chart{background:#ffffff;border:1px solid #e1e4e8;border-radius:10px;padding:12px 14px 8px}
+.ch-t{font-size:13px;font-weight:700;margin-bottom:2px}
+.ch-l{font-size:11px;color:#667085;display:flex;gap:10px;margin-bottom:4px}
+.ch-l i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.chart svg{width:100%;height:auto;display:block}
+@media(prefers-color-scheme:dark){.kcard,.chart{background:#171a1f !important;border-color:#2a2f37 !important}}
 </style></head><body>
 <div id="app"><div class="login" id="login">
   <h1>MyVerse 관리자</h1><p class="muted">분석 대시보드</p>
@@ -209,7 +224,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:#eef2fb}
 </div></div>
 <script>
 const URL_="https://mqzbgtndjpaxjootlgqi.supabase.co",ANON="sb_publishable_MPpJx2zEN_W_ETaE3AmXfw_VGtY6D_n";
-let TOKEN=sessionStorage.getItem('mv_at')||'',RTOKEN=sessionStorage.getItem('mv_rt')||'',TAB='분석',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false;
+let TOKEN=sessionStorage.getItem('mv_at')||'',RTOKEN=sessionStorage.getItem('mv_rt')||'',TAB='대시보드',timer,LAST=null,modalOpen=false,AUDIT=null,AUDIT_BUSY=false,PEND=null,PEND_BUSY=false,TRAIN=null,TRAIN_BUSY=false,DASH=null,DDAYS=14,DASH_BUSY=false;
 async function login(){
   const email=document.getElementById('email').value.trim(),pw=document.getElementById('pw').value;
   document.getElementById('err').textContent='';
@@ -264,6 +279,74 @@ function bars(data,keys,colors,labelIdx){
 }
 function chartCard(title,sub,svg){return'<div class="chart"><div class="ct"><span>'+title+'</span><em>'+sub+'</em></div>'+svg+'</div>'}
 function tbl(head,rows){return'<div class="scroll"><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>'}
+
+
+// ── 대시보드(지표 한눈) ──────────────────────────────────────────────
+async function loadDash(silent){
+  if(DASH_BUSY)return;DASH_BUSY=true;
+  try{const d=await api({view:'dashboard',days:DDAYS});DASH=d;if(!silent&&LAST)render(LAST);else if(LAST&&TAB==='대시보드')render(LAST);}
+  catch(e){}finally{DASH_BUSY=false}
+}
+function setDDays(n){DDAYS=n;DASH=null;loadDash()}
+function _mx(a){return Math.max(1,...a)}
+function _xl(days){ // x축 라벨: 처음/중간/끝만
+  const n=days.length,pick=[0,Math.floor((n-1)/2),n-1];
+  return pick.map((i,j)=>'<text x="'+(30+i*(560/Math.max(1,n-1)))+'" y="118" font-size="9" fill="#98a2b3" text-anchor="'+(j===2?'end':j===0?'start':'middle')+'">'+days[i].d+'</text>').join('');
+}
+function svgBars(days,key,color,fmt){
+  const W=600,H=122,L=30,vs=days.map(x=>+x[key]||0),mx=_mx(vs),bw=Math.min(26,(W-L-10)/days.length*0.66);
+  const step=(W-L-10)/Math.max(1,days.length);
+  let b='';
+  vs.forEach((v,i)=>{const h=Math.round(v/mx*92),x=L+i*step+(step-bw)/2;
+    b+='<rect x="'+x.toFixed(1)+'" y="'+(100-h)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(h,v>0?2:0)+'" rx="2" fill="'+color+'"><title>'+days[i].d+' · '+(fmt?fmt(v):v)+'</title></rect>';});
+  return '<svg viewBox="0 0 '+W+' '+H+'"><line x1="'+L+'" y1="100" x2="'+(W-6)+'" y2="100" stroke="#e1e4e8"/>'
+    +'<text x="'+(L-4)+'" y="14" font-size="9" fill="#98a2b3" text-anchor="end">'+(fmt?fmt(mx):mx)+'</text>'+b+_xl(days)+'</svg>';
+}
+function _pts(days,key,mx){const W=600,L=30,step=(W-L-10)/Math.max(1,days.length-1);
+  return days.map((x,i)=>(L+i*step).toFixed(1)+','+(100-((+x[key]||0)/mx*92)).toFixed(1));}
+function svgLines(days,keys,colors,fmt){
+  const W=600,H=122,L=30,mx=_mx(days.flatMap(x=>keys.map(k=>+x[k]||0)));
+  let out='<svg viewBox="0 0 '+W+' '+H+'"><line x1="'+L+'" y1="100" x2="'+(W-6)+'" y2="100" stroke="#e1e4e8"/>'
+    +'<text x="'+(L-4)+'" y="14" font-size="9" fill="#98a2b3" text-anchor="end">'+(fmt?fmt(mx):mx)+'</text>';
+  keys.forEach((k,ki)=>{const p=_pts(days,k,mx);
+    if(ki===0)out+='<polygon points="'+L+',100 '+p.join(' ')+' '+(30+(600-40)).toFixed(1)+',100" fill="'+colors[ki]+'18"/>';
+    out+='<polyline points="'+p.join(' ')+'" fill="none" stroke="'+colors[ki]+'" stroke-width="2"/>';
+    const last=p[p.length-1].split(',');
+    out+='<circle cx="'+last[0]+'" cy="'+last[1]+'" r="3" fill="'+colors[ki]+'"><title>'+days[days.length-1].d+' · '+((+days[days.length-1][k])||0)+'</title></circle>';});
+  return out+_xl(days)+'</svg>';
+}
+function svgStack(days,keys,colors){
+  const W=600,H=122,L=30,step=(W-L-10)/Math.max(1,days.length),bw=Math.min(26,step*0.66);
+  const mx=_mx(days.map(x=>keys.reduce((a,k)=>a+(+x[k]||0),0)));
+  let b='';
+  days.forEach((x,i)=>{let y=100;const xx=L+i*step+(step-bw)/2;
+    keys.forEach((k,ki)=>{const v=+x[k]||0,h=Math.round(v/mx*92);y-=h;
+      if(h>0)b+='<rect x="'+xx.toFixed(1)+'" y="'+y+'" width="'+bw.toFixed(1)+'" height="'+h+'" fill="'+colors[ki]+'"><title>'+x.d+' · '+v+'</title></rect>';});});
+  return '<svg viewBox="0 0 '+W+' '+H+'"><line x1="'+L+'" y1="100" x2="'+(W-6)+'" y2="100" stroke="#e1e4e8"/>'
+    +'<text x="'+(L-4)+'" y="14" font-size="9" fill="#98a2b3" text-anchor="end">'+mx+'</text>'+b+_xl(days)+'</svg>';
+}
+function dashTab(){
+  if(!DASH)return '<p class="muted" style="margin:30px 0;text-align:center">대시보드 불러오는 중…</p>';
+  const ds=DASH.days||[],t=DASH.totals||{};
+  const sum=k=>ds.reduce((a,x)=>a+(+x[k]||0),0);
+  const money=v=>'$'+(+v).toFixed(2);
+  const kpis=[[N(t.users),'총 유저','+'+sum('signups')+' (기간)'],[N(t.today_dau),'오늘 활동 유저',''],
+    [N(t.personas),'승인 페르소나',''],[N((t.user_posts||0)+(t.ai_posts||0)),'총 게시물','유저 '+N(t.user_posts)+' · AI '+N(t.ai_posts)],
+    [N(t.dm_threads),'DM 스레드','대화 '+N(sum('user_dms')+sum('ai_dms'))+' (기간)'],[N(t.relationships),'관계','평균 호감도 '+(t.avg_rel_score??'-')],
+    [N(sum('ai_calls')),'AI 호출 (기간)',''],[money(sum('ai_cost')),'AI 비용 (기간)','']];
+  const seg=[7,14,30,90].map(n=>'<button class="stab'+(DDAYS===n?' on':'')+'" onclick="setDDays('+n+')">'+n+'일</button>').join('');
+  const leg=(a)=>'<div class="ch-l">'+a.map(x=>'<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>').join('')+'</div>';
+  return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><h2 style="margin:0">지표 한눈에</h2><div style="margin-left:auto;display:flex;gap:6px">'+seg+'</div></div>'
+    +'<div class="kgrid">'+kpis.map(k=>'<div class="kcard"><div class="kv">'+k[0]+'</div><div class="kl">'+k[1]+'</div>'+(k[2]?'<div class="ks">'+k[2]+'</div>':'')+'</div>').join('')+'</div>'
+    +'<div class="cgrid">'
+    +'<div class="chart"><div class="ch-t">활동 유저 (DAU)</div>'+svgLines(ds,['dau'],['#2f6feb'])+'</div>'
+    +'<div class="chart"><div class="ch-t">신규 가입</div>'+svgBars(ds,'signups','#12805c')+'</div>'
+    +'<div class="chart"><div class="ch-t">게시물 생성</div>'+leg([['AI','#8b5cf6'],['유저','#2f6feb']])+svgStack(ds,['ai_posts','user_posts'],['#8b5cf6','#2f6feb'])+'</div>'
+    +'<div class="chart"><div class="ch-t">댓글</div>'+leg([['AI','#f59e0b'],['유저','#2f6feb']])+svgStack(ds,['ai_comments','user_comments'],['#f59e0b','#2f6feb'])+'</div>'
+    +'<div class="chart"><div class="ch-t">DM 대화</div>'+leg([['유저 발신','#2f6feb'],['AI 발신','#ef4444']])+svgLines(ds,['user_dms','ai_dms'],['#2f6feb','#ef4444'])+'</div>'
+    +'<div class="chart"><div class="ch-t">AI 비용 (일별 $)</div>'+svgBars(ds,'ai_cost','#64748b',v=>'$'+(+v).toFixed(2))+'</div>'
+    +'</div>';
+}
 
 function analytics(d){
   const s=d.stats;
@@ -927,16 +1010,17 @@ function settingsTab(){
     +'</div>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='설정'&&!SET)loadSettings();if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
+function setTab(t){TAB=t;if(t==='대시보드'&&!DASH)loadDash();if(t==='설정'&&!SET)loadSettings();if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습','설정'];
+  const tabs=['대시보드','분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습','설정'];
   const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null,'이미지':IMG?IMG.total:null};
-  let body=TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='설정'?settingsTab():TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
+  let body=TAB==='대시보드'?dashTab():TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='설정'?settingsTab():TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
+  if(TAB==='대시보드'){try{LAST=await api({});loadDash(true)}catch(e){if(e==='unauth')relogin()}return;}
   if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'){try{LAST=await api({})}catch(e){if(e==='unauth')relogin()}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
