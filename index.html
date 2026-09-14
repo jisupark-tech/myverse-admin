@@ -348,6 +348,48 @@ function dashTab(){
     +'</div>';
 }
 
+// ── 데이터 탭: 수집 범위(Play 데이터안전 근거) + BigQuery 적재 설정 ──
+let DATA=null, DATA_BUSY=false, BQ_DRAFT=null, BQ_MSG='';
+async function loadData(){ if(DATA_BUSY)return; DATA_BUSY=true; if(LAST)render(LAST);
+  try{ DATA=await api({view:'data_catalog'}) }catch(e){ DATA={error:String(e)} }
+  BQ_DRAFT=null; DATA_BUSY=false; if(LAST)render(LAST); }
+function bqDraft(){ if(!BQ_DRAFT){ const b=(DATA&&DATA.bigquery)||{}; BQ_DRAFT={enabled:!!b.enabled,dataset:b.dataset||'myverse',
+  tables:Array.isArray(b.tables)?b.tables.slice():['feed_events','ai_token_log'],exclude_pii:b.exclude_pii!==false}; } return BQ_DRAFT; }
+function bqTog(t){ const d=bqDraft(); const i=d.tables.indexOf(t); if(i<0)d.tables.push(t); else d.tables.splice(i,1); BQ_MSG=''; if(LAST)render(LAST); }
+function bqSet(k,v){ bqDraft()[k]=v; BQ_MSG=''; if(LAST)render(LAST); }
+async function bqSave(){ try{ await api({action:'save_settings',key:'bigquery',value:bqDraft()}); BQ_MSG='저장됨 ✓'; DATA=null; await loadData(); }catch(e){ BQ_MSG='저장 실패: '+(e.error||e); if(LAST)render(LAST); } }
+function dataTab(){
+  if(!DATA) return '<p class="muted" style="margin:30px 0;text-align:center">불러오는 중…</p>';
+  if(DATA.error) return '<p class="err">'+esc(DATA.error)+'</p>';
+  const c=DATA.catalog||[];
+  const yn=v=>v?'<span style="color:#c0392b">예</span>':'아니오';
+  let h='<h2>수집 데이터 (Play 데이터안전 신고 근거)</h2>'
+    +'<p class="muted">앱이 실제로 저장하는 데이터입니다. 위치·연락처·광고ID는 수집하지 않습니다.</p>'
+    +'<div style="overflow-x:auto"><table><tr><th>데이터</th><th class="n">행수</th><th>목적</th><th>외부공유</th><th>개인정보</th></tr>'
+    +c.map(r=>'<tr><td>'+esc(r.label)+'</td><td class="n">'+N(r.rows)+'</td><td>'+esc(r.purpose)+'</td><td>'+yn(r.shared)+'</td><td>'+yn(r.pii)+'</td></tr>').join('')
+    +'</table></div>'
+    +'<div class="kgrid" style="margin-top:12px">'
+    +'<div class="kcard"><div class="kv">'+(DATA.location_collected?'예':'아니오')+'</div><div class="kl">위치 수집</div></div>'
+    +'<div class="kcard"><div class="kv">'+(DATA.ads?'예':'아니오')+'</div><div class="kl">광고 SDK</div></div>'
+    +'<div class="kcard"><div class="kv">'+(DATA.billing_enabled?'ON':'OFF')+'</div><div class="kl">결제(진입점)</div></div>'
+    +'<div class="kcard"><div class="kv" style="font-size:14px">'+(DATA.analytics||[]).map(esc).join(', ')+'</div><div class="kl">분석 도구</div></div>'
+    +'</div>';
+  // BigQuery 적재
+  const b=bqDraft();
+  const ALL=[['feed_events','열람·좋아요 로그'],['ai_token_log','AI 사용량·비용'],['ai_usage','유저별 AI 호출'],['persona_posts','AI 게시물'],['posts','유저 게시물'],['relationships','관계'],['diamond_ledger','다이아 내역']];
+  h+='<h2 style="margin-top:20px">BigQuery 적재 <span class="muted" style="font-size:13px">(선택 — 외부 GCP 설정 필요)</span></h2>'
+    +'<div class="panel" style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px">'
+    +'<label style="display:flex;align-items:center;gap:8px;font-weight:700"><input type="checkbox" '+(b.enabled?'checked':'')+' onchange="bqSet(\'enabled\',this.checked)"> 적재 사용</label>'
+    +'<p class="muted" style="font-size:13px;margin:8px 0">켜기 전에 GCP 프로젝트·서비스계정이 필요합니다. 설정 방법은 저장소 <b>docs/analytics/BIGQUERY_GUIDE.md</b> 참고.</p>'
+    +'<div style="margin:8px 0">데이터셋: <input style="width:auto;display:inline-block" value="'+esc(b.dataset)+'" onchange="bqSet(\'dataset\',this.value)"></div>'
+    +'<div style="margin:8px 0"><b>적재할 테이블(depth):</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'
+    +ALL.map(t=>'<button class="stab'+(b.tables.includes(t[0])?' on':'')+'" onclick="bqTog(\''+t[0]+'\')">'+t[1]+'</button>').join('')+'</div></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" '+(b.exclude_pii?'checked':'')+' onchange="bqSet(\'exclude_pii\',this.checked)"> 개인정보(이메일 등) 제외하고 적재 <span class="muted">(권장)</span></label>'
+    +'<button onclick="bqSave()" style="margin-top:6px">설정 저장</button> <span class="muted">'+esc(BQ_MSG)+'</span>'
+    +'</div>';
+  return h;
+}
+
 function analytics(d){
   const s=d.stats;
   let h='<div class="kpis">'
@@ -1010,18 +1052,18 @@ function settingsTab(){
     +'</div>';
   return h;
 }
-function setTab(t){TAB=t;if(t==='대시보드'&&!DASH)loadDash();if(t==='설정'&&!SET)loadSettings();if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(LAST)render(LAST)}
+function setTab(t){TAB=t;if(t==='대시보드'&&!DASH)loadDash();if(t==='설정'&&!SET)loadSettings();if(t==='이미지'&&!IMG)loadImages();if(t==='검수'&&!AUDIT)loadAudit();if(t==='배포'&&!PEND)loadPending();if(t==='학습'&&!TRAIN)loadTraining();if(t==='탐색'&&!EXP)loadExplore();if(t==='검토함'&&!FLAGS)loadFlags();if(t==='데이터'&&!DATA)loadData();if(LAST)render(LAST)}
 function render(d){
-  const tabs=['대시보드','분석','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습','설정'];
+  const tabs=['대시보드','분석','데이터','탐색','배포','검토함','게시물','유저','페르소나','이미지','검수','학습','설정'];
   const cnt={'게시물':(d.posts||[]).length,'유저':(d.users||[]).length,'페르소나':(d.personas||[]).length,'검수':AUDIT?(AUDIT.stats||{}).pending:null,'배포':PEND?((PEND.pendingPosts||0)+(PEND.pendingPersonas||0)):null,'학습':TRAIN?(TRAIN.pairs||{}).total:null,'탐색':EXP&&EXP.tables?EXP.tables.length:null,'검토함':FLAGS?FLAGS.pendingTotal:null,'이미지':IMG?IMG.total:null};
-  let body=TAB==='대시보드'?dashTab():TAB==='분석'?analytics(d):TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='설정'?settingsTab():TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
+  let body=TAB==='대시보드'?dashTab():TAB==='분석'?analytics(d):TAB==='데이터'?dataTab():TAB==='탐색'?exploreTab():TAB==='배포'?pendingTab():TAB==='검토함'?flagsTab():TAB==='게시물'?postsTab(d):TAB==='유저'?usersTab(d):TAB==='설정'?settingsTab():TAB==='이미지'?imagesTab():TAB==='검수'?auditTab():TAB==='학습'?trainingTab():personasTab(d);
   document.getElementById('app').innerHTML='<div class="wrap"><div class="live"><span class="dot"></span>실시간 · '+new Date().toLocaleTimeString('ko')+' 갱신</div>'
     +'<div class="tabs">'+tabs.map(t=>'<div class="tab'+(TAB===t?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+(cnt[t]!=null?' ('+cnt[t]+')':'')+'</div>').join('')+'</div>'+body+'</div>';
 }
 async function refresh(){if(modalOpen)return;
   // 승인/검수/학습 탭은 자체 데이터로 렌더 — 12초 전체 리렌더가 업로드 폼 입력을 지우지 않게 스킵.
   if(TAB==='대시보드'){try{LAST=await api({});loadDash(true)}catch(e){if(e==='unauth')relogin()}return;}
-  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'){try{LAST=await api({})}catch(e){if(e==='unauth')relogin()}return;}
+  if(TAB==='배포'||TAB==='검수'||TAB==='학습'||TAB==='탐색'||TAB==='검토함'||TAB==='이미지'||TAB==='설정'||TAB==='데이터'){try{LAST=await api({})}catch(e){if(e==='unauth')relogin()}return;}
   try{const d=await api({});LAST=d;render(d)}catch(e){if(e==='forbidden'){document.getElementById('app').innerHTML='<div class="login"><h1>접근 불가</h1><p class="muted">관리자 계정이 아니에요.</p></div>';clearInterval(timer)}else if(e==='unauth'){sessionStorage.removeItem('mv_at');location.reload()}}}
 function start(){refresh();clearInterval(timer);timer=setInterval(refresh,12000)}
 if(TOKEN)start();
