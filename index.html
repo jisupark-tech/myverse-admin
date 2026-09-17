@@ -349,15 +349,10 @@ function dashTab(){
 }
 
 // ── 데이터 탭: 수집 범위(Play 데이터안전 근거) + BigQuery 적재 설정 ──
-let DATA=null, DATA_BUSY=false, BQ_DRAFT=null, BQ_MSG='';
+let DATA=null, DATA_BUSY=false;
 async function loadData(){ if(DATA_BUSY)return; DATA_BUSY=true; if(LAST)render(LAST);
   try{ DATA=await api({view:'data_catalog'}) }catch(e){ DATA={error:String(e)} }
-  BQ_DRAFT=null; DATA_BUSY=false; if(LAST)render(LAST); }
-function bqDraft(){ if(!BQ_DRAFT){ const b=(DATA&&DATA.bigquery)||{}; BQ_DRAFT={enabled:!!b.enabled,dataset:b.dataset||'myverse',
-  tables:Array.isArray(b.tables)?b.tables.slice():['feed_events','ai_token_log'],exclude_pii:b.exclude_pii!==false}; } return BQ_DRAFT; }
-function bqTog(t){ const d=bqDraft(); const i=d.tables.indexOf(t); if(i<0)d.tables.push(t); else d.tables.splice(i,1); BQ_MSG=''; if(LAST)render(LAST); }
-function bqSet(k,v){ bqDraft()[k]=v; BQ_MSG=''; if(LAST)render(LAST); }
-async function bqSave(){ try{ await api({action:'save_settings',key:'bigquery',value:bqDraft()}); BQ_MSG='저장됨 ✓'; DATA=null; await loadData(); }catch(e){ BQ_MSG='저장 실패: '+(e.error||e); if(LAST)render(LAST); } }
+  DATA_BUSY=false; if(LAST)render(LAST); }
 function dataTab(){
   if(!DATA) return '<p class="muted" style="margin:30px 0;text-align:center">불러오는 중…</p>';
   if(DATA.error) return '<p class="err">'+esc(DATA.error)+'</p>';
@@ -374,19 +369,22 @@ function dataTab(){
     +'<div class="kcard"><div class="kv">'+(DATA.billing_enabled?'ON':'OFF')+'</div><div class="kl">결제(진입점)</div></div>'
     +'<div class="kcard"><div class="kv" style="font-size:14px">'+(DATA.analytics||[]).map(esc).join(', ')+'</div><div class="kl">분석 도구</div></div>'
     +'</div>';
-  // BigQuery 적재
-  const b=bqDraft();
-  const ALL=[['feed_events','열람·좋아요 로그'],['ai_token_log','AI 사용량·비용'],['ai_usage','유저별 AI 호출'],['persona_posts','AI 게시물'],['posts','유저 게시물'],['relationships','관계'],['diamond_ledger','다이아 내역']];
-  h+='<h2 style="margin-top:20px">BigQuery 적재 <span class="muted" style="font-size:13px">(선택 — 외부 GCP 설정 필요)</span></h2>'
-    +'<div class="panel" style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px">'
-    +'<label style="display:flex;align-items:center;gap:8px;font-weight:700"><input type="checkbox" '+(b.enabled?'checked':'')+' onchange="bqSet(\'enabled\',this.checked)"> 적재 사용</label>'
-    +'<p class="muted" style="font-size:13px;margin:8px 0">켜기 전에 GCP 프로젝트·서비스계정이 필요합니다. 설정 방법은 저장소 <b>docs/analytics/BIGQUERY_GUIDE.md</b> 참고.</p>'
-    +'<div style="margin:8px 0">데이터셋: <input style="width:auto;display:inline-block" value="'+esc(b.dataset)+'" onchange="bqSet(\'dataset\',this.value)"></div>'
-    +'<div style="margin:8px 0"><b>적재할 테이블(depth):</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'
-    +ALL.map(t=>'<button class="stab'+(b.tables.includes(t[0])?' on':'')+'" onclick="bqTog(\''+t[0]+'\')">'+t[1]+'</button>').join('')+'</div></div>'
-    +'<label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" '+(b.exclude_pii?'checked':'')+' onchange="bqSet(\'exclude_pii\',this.checked)"> 개인정보(이메일 등) 제외하고 적재 <span class="muted">(권장)</span></label>'
-    +'<button onclick="bqSave()" style="margin-top:6px">설정 저장</button> <span class="muted">'+esc(BQ_MSG)+'</span>'
-    +'</div>';
+  // Service-only aggregate status. Clients cannot change export scope here.
+  const p=DATA.analytics_pipeline;
+  h+='<h2 style="margin-top:20px">BigQuery 이벤트 적재</h2>';
+  if(!p||p.error) return h+'<p class="err">적재 상태를 확인하지 못했습니다.</p>';
+  const cfg=p.settings||{}, o=p.outbox||{}, d=p.deletions||{};
+  h+='<p>프로젝트: <b>MyVerse Analytics</b> · magnetic-alloy-508811-t2 · 서울</p>'
+    +'<p class="muted">선택 동의한 사용자의 게시물 작성 이벤트(post_created)만 수집합니다. 본문·사진·이메일은 전송하지 않습니다. 분석 데이터는 30일 보관하며, 예약 적재는 5분 간격입니다.</p>'
+    +'<div class="kgrid">'
+    +'<div class="kcard"><div class="kv">'+(cfg.collection_enabled?'ON':'OFF')+'</div><div class="kl">수집</div></div>'
+    +'<div class="kcard"><div class="kv">'+N((o.pending||0)+(o.batched||0))+'</div><div class="kl">적재 대기</div></div>'
+    +'<div class="kcard"><div class="kv">'+N(o.exported||0)+'</div><div class="kl">적재 완료</div></div>'
+    +'<div class="kcard"><div class="kv">'+N(o.dead||0)+'</div><div class="kl">재시도 소진</div></div>'
+    +'<div class="kcard"><div class="kv">'+N((d.pending||0)+(d.blocked||0))+'</div><div class="kl">삭제 대기</div></div>'
+    +'</div>'
+    +'<p class="muted">최근 오류 코드: '+esc(p.last_error_code||'없음')+' · 가장 오래된 대기: '+esc(p.oldest_pending||'없음')+'</p>'
+    +'<button onclick="loadData()">상태 새로고침</button>';
   return h;
 }
 
