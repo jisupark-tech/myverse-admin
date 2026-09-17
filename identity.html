@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MyVerse · 휴대폰 본인인증</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#faf8fb;color:#211c27;font:16px/1.65 system-ui,-apple-system,sans-serif;display:grid;min-height:100svh;place-items:center;padding:24px}
+    main{width:min(100%,430px);background:white;border:1px solid #ece5ee;border-radius:24px;padding:32px;box-shadow:0 12px 48px #33203f08}
+    .brand{color:#bd396d;font-weight:750;letter-spacing:.02em}h1{font-size:26px;line-height:1.35;margin:24px 0 12px}p{color:#645e6b}button,a{display:block;width:100%;border:0;border-radius:12px;padding:14px;text-align:center;font:inherit;font-weight:650;text-decoration:none;cursor:pointer}button{background:#d63878;color:white}button:disabled{opacity:.55;cursor:wait}a{color:#a12657;background:#fbecf2;margin-top:12px}[hidden]{display:none!important}.small{font-size:13px}
+  </style>
+</head>
+<body><main>
+  <div class="brand">MyVerse</div>
+  <h1>휴대폰으로<br>성인인증하기</h1>
+  <p id="message" role="status">본인 명의의 휴대폰으로 진행해주세요. 통신사 인증 화면에서 PASS를 선택할 수 있어요.</p>
+  <button id="start" type="button" hidden>본인인증 시작</button>
+  <a id="return" href="myverseapp://identity-callback" hidden>MyVerse로 돌아가기</a>
+  <p class="small">성인 여부는 인증을 마친 뒤 MyVerse에서 확인합니다. 이름·전화번호·생년월일 원문은 MyVerse에 저장하지 않아요.</p>
+</main>
+<script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+<script src="./identity.js"></script>
+</body></html>
