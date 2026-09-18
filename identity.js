@@ -9,24 +9,41 @@
   const bridgeUrl = new URL('./identity.html', location.href);
   const fragment = new URLSearchParams(location.hash.slice(1));
   const query = new URLSearchParams(location.search);
+  // Remove even malformed/expired callback values before loading any third-party code.
+  history.replaceState(null, '', bridgeUrl.pathname);
+  const clear = () => { try { sessionStorage.removeItem(storageKey); } catch { /* Storage may be disabled. */ } };
+  if (location.protocol !== 'https:') {
+    clear();
+    message.textContent = '안전한 연결이 필요해요. MyVerse에서 인증을 다시 시작해주세요.';
+    return;
+  }
+  function validated(value) {
+    if (!value || typeof value.id !== 'string' || !/^mv_[a-f0-9]{32}$/.test(value.id)
+      || typeof value.storeId !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(value.storeId)
+      || typeof value.channelKey !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(value.channelKey)
+      || typeof value.expiresAt !== 'string' || !Number.isFinite(Date.parse(value.expiresAt))
+      || Date.parse(value.expiresAt) <= Date.now()
+      || Date.parse(value.expiresAt) > Date.now() + 630000) throw new Error('invalid');
+    // Do not persist unknown fragment fields, identity data, error text or tokens.
+    return { id: value.id, storeId: value.storeId, channelKey: value.channelKey,
+      expiresAt: value.expiresAt, mode: value.mode === 'web' ? 'web' : 'app' };
+  }
   let session;
   try {
     if (fragment.has('id')) {
-      session = Object.fromEntries(fragment);
-      if (!/^mv_[a-f0-9]{32}$/.test(session.id) || !session.storeId || !session.channelKey
-        || !Number.isFinite(Date.parse(session.expiresAt))) throw new Error('invalid');
-      session.mode = session.mode === 'web' ? 'web' : 'app';
-      sessionStorage.setItem(storageKey, JSON.stringify(session));
-      history.replaceState(null, '', bridgeUrl.pathname);
+      if (Array.from(fragment.keys()).some(key => fragment.getAll(key).length !== 1)) throw new Error('duplicate');
+      session = validated(Object.fromEntries(fragment));
     } else {
-      session = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+      session = validated(JSON.parse(sessionStorage.getItem(storageKey) || 'null'));
     }
-    if (!session || Date.parse(session.expiresAt) <= Date.now()) throw new Error('expired');
+    sessionStorage.setItem(storageKey, JSON.stringify(session));
   } catch {
+    clear();
     message.textContent = '인증 요청이 없거나 시간이 지났어요. MyVerse 설정에서 다시 시작해주세요.';
     return;
   }
   function finish(failed) {
+    clear();
     start.hidden = true;
     if (session.mode === 'web') {
       message.textContent = failed ? '인증이 완료되지 않았어요. MyVerse로 돌아가 다시 시도해주세요.'
@@ -46,13 +63,24 @@
     finish(mismatch || !!query.get('code'));
     return;
   }
-  if (!window.PortOne?.requestIdentityVerification) {
-    message.textContent = '인증 화면을 불러오지 못했어요. 연결을 확인한 뒤 MyVerse에서 다시 시도해주세요.';
-    return;
-  }
-  start.hidden = false;
+  // Load the SDK only for a validated request, after URL sanitization.
+  const sdk = document.createElement('script');
+  sdk.src = 'https://cdn.portone.io/v2/browser-sdk.js';
+  sdk.referrerPolicy = 'no-referrer';
+  sdk.onload = () => {
+    if (window.PortOne?.requestIdentityVerification) start.hidden = false;
+    else sdk.onerror();
+  };
+  sdk.onerror = () => {
+    message.textContent = '인증 화면을 불러오지 못했어요. MyVerse에서 다시 시도해주세요.';
+  };
+  document.head.appendChild(sdk);
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) location.reload();
+  });
   start.addEventListener('click', async () => {
     if (Date.parse(session.expiresAt) <= Date.now()) {
+      clear();
       message.textContent = '인증 시간이 지났어요. MyVerse에서 다시 시작해주세요.';
       start.hidden = true;
       return;

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.portone.io; style-src 'unsafe-inline'; connect-src https:; frame-src https:; form-action https:; img-src https: data:; base-uri 'none'; object-src 'none'">
   <meta name="robots" content="noindex,nofollow">
   <title>MyVerse · 휴대폰 본인인증</title>
   <style>
@@ -20,6 +21,5 @@
   <a id="return" href="myverseapp://identity-callback" hidden>MyVerse로 돌아가기</a>
   <p class="small">성인 여부는 인증을 마친 뒤 MyVerse에서 확인합니다. 이름·전화번호·생년월일 원문은 MyVerse에 저장하지 않아요.</p>
 </main>
-<script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 <script src="./identity.js"></script>
 </body></html>
